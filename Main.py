@@ -20,6 +20,7 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		QApplication.setStyle(QStyleFactory.create("Cleanlooks"))
 		self.dirCurrent = os.getcwd()
 
+
 		# Define menu bar actions
 		self.actionQuit_Application.setShortcut("Ctrl+Q")
 		self.actionQuit_Application.setStatusTip('Leave the Application')
@@ -83,6 +84,8 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 			"You have chosen: " + str(fileNameTrial) + " to process.  "\
 			"Is this correct?",
 			QMessageBox.Yes | QMessageBox.No)
+		self.progressTrial.setValue(0)    ############################# ADDED to reset when new file loaded
+
 		if trialSelect == QMessageBox.Yes:
 			trialName = fileNameTrial
 			self.lineTrialName.setText(QString(trialName))
@@ -106,15 +109,22 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 				pass
 
 	def force_plate(self): 
+		############################################################################################
+		#I would think about setting these variables that are hard coded into another .py file 
+		#within the directory names variables.py or soemthing, and then import them. 
+		#This will allow you to quickly know where to look to alter the program for other labs etc. 
+		# I would do the same thing for the sensitivity matrix. I think I save sensitivity matrices as
+		#.csv in my other programs and then import them. But again, you should save them in a sperate .py. 
 		xPos = self.lineX
 		yPos = self.lineY
 		zPos = self.lineZ
 		plateNum = self.comboBoxFP.currentIndex()
 		samplingRate = int(self.lineSampling.text())
 		if plateNum == 0:
-			self.forcePlateImage.setPixmap(QPixmap(str(self.dirCurrent) + '\Plates.png'))
+			self.forcePlateImage.setPixmap(QPixmap(str(os.path.join(self.dirCurrent,'Plates.png'))))
+			print(self.dirCurrent)
 		elif plateNum == 1: 
-			self.forcePlateImage.setPixmap(QPixmap(str(self.dirCurrent) + '\Plate1.png'))
+			self.forcePlateImage.setPixmap(QPixmap(str(os.path.join(self.dirCurrent,'Plate1.png'))))
 			x = 0.5/1000
 			y = -0.5/1000
 			z = -41.4/1000
@@ -122,7 +132,7 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 			yPos.setText(QString(str(y)))
 			zPos.setText(QString(str(z)))
 		elif plateNum == 2:
-			self.forcePlateImage.setPixmap(QPixmap(str(self.dirCurrent) + '\Plate2.png'))
+			self.forcePlateImage.setPixmap(QPixmap(str(os.path.join(self.dirCurrent,'Plate2.png'))))
 			x = -0.2/1000
 			y = 0.6/1000
 			z = -39.8/1000
@@ -170,7 +180,11 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 				[0.0071, -0.0028, 0.0069, 0.5908, 0.0043, -0.0003], [0.0138, 0.0054, -0.0048, 0.0026, 0.5938, 0.0007],
 				[0.0011, 0.0063, 0.0003, -0.0030, 0.0011, 0.2978]]) 
 		
-		analog_data = pd.read_csv(str(fileNameTrial), sep=',', skiprows=3, usecols=range(1,13))
+		try: analog_data = pd.read_csv(str(fileNameTrial), sep=',', skiprows=3, usecols=range(1,13))
+		except:
+			errorBox = QMessageBox.critical(self, 'File Error', 'You are procssing a file named: ' +
+				str(fileNameTrial) + '. This file is the wrong format. Check to ensure it ends with _Odau_1.csv')
+			return None
 		if plateNum == 1: 
 			forcePlateAnalog = numpy.asarray(analog_data.loc[:,['Analog_1', 'Analog_2', 'Analog_3', 'Analog_4', 
 				'Analog_5', 'Analog_6',]])
