@@ -13,6 +13,10 @@ import ProgramGeometry #imports layout from QtDesigner
 from HelpWindow import Ui_Dialog
 
 
+sys.path.append(os.path.join(os.getcwd(),'CofPfunctions')) # add path to CofP functions to directory
+import CofPfunctions
+
+
 class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 	def __init__(self, parent=None):
 		super(ExampleApp, self).__init__(parent)
@@ -250,28 +254,55 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 			self.completed += 0.0005
 			self.progressTrial.setValue(self.completed)
 
+
+		distance_x_005 = CofPfunctions.getDistance_Coverage(CofPx, 0.05)
+		distance_x_010 = CofPfunctions.getDistance_Coverage(CofPx, 0.1)
+		distance_x_025 = CofPfunctions.getDistance_Coverage(CofPx, 0.25)
+		distance_x_050 = CofPfunctions.getDistance_Coverage(CofPx, 0.5)
+		distance_x_075 = CofPfunctions.getDistance_Coverage(CofPx, 0.75)
+		distance_x_090 = CofPfunctions.getDistance_Coverage(CofPx, 0.9)
+		distance_x_095 = CofPfunctions.getDistance_Coverage(CofPx, 0.95)
+
+		distance_y_005 = CofPfunctions.getDistance_Coverage(CofPy, 0.05)
+		distance_y_010 = CofPfunctions.getDistance_Coverage(CofPy, 0.1)
+		distance_y_025 = CofPfunctions.getDistance_Coverage(CofPy, 0.25)
+		distance_y_050 = CofPfunctions.getDistance_Coverage(CofPy, 0.5)
+		distance_y_075 = CofPfunctions.getDistance_Coverage(CofPy, 0.75)
+		distance_y_090 = CofPfunctions.getDistance_Coverage(CofPy, 0.9)
+		distance_y_095 = CofPfunctions.getDistance_Coverage(CofPy, 0.95)
+
+		distance_x = CofPfunctions.getDistanceCofP(CofPx, filter=True, freqCutoff=20, samplingRate=1000, order=2)
+		distance_y = CofPfunctions.getDistanceCofP(CofPy, filter=True, freqCutoff=20, samplingRate=1000, order=2)
+		distance_xy = CofPfunctions.getDistanceBothAxes(CofPx, CofPy, filter=True, freqCutoff=20, samplingRate=1000, order=2)
+
+		speed_x = distance_x/((1./samplingRate) * len(CofPx)) 
+		speed_y = distance_y/((1./samplingRate) * len(CofPy)) 
+		speed_xy = distance_xy/((1./samplingRate) * len(CofPx)) 
+
+
+
 		######### Populate these with the new variables
-		#self.lineMeanSpeedx.setText(QString())
-		#self.lineMeanSpeedy.setText(QString())
-		#self.lineDistancex.setText(QString())
-		#self.lineDistancey.setText(QString())
+		self.lineMeanSpeedx.setText(QString(str.format('{0:.4f}',speed_x)))
+		self.lineMeanSpeedy.setText(QString(str.format('{0:.4f}',speed_y)))
+		self.lineDistancex.setText(QString(str.format('{0:.4f}',distance_x)))
+		self.lineDistancey.setText(QString(str.format('{0:.4f}',distance_y)))
 		#self.lineMSEx.setText(QString())
 		#self.lineMSEy.setText(QString())
 
-		#self.line005x.setText(QString())
-		#self.line005y.setText(QString())
-		#self.line01x.setText(QString())
-		#self.line01y.setText(QString())
-		#self.line025x.setText(QString())
-		#self.line025y.setText(QString())
-		#self.line05x.setText(QString())
-		#self.line05y.setText(QString())
-		#self.line075x.setText(QString())
-		#self.line075y.setText(QString())
-		#self.line09x.setText(QString())
-		#self.line09y.setText(QString())
-		#self.line095x.setText(QString())
-		#self.line095y.setText(QString())
+		self.line005x.setText(QString(str.format('{0:.4f}',distance_x_005)))
+		self.line005y.setText(QString(str.format('{0:.4f}',distance_y_005)))
+		self.line01x.setText(QString(str.format('{0:.4f}',distance_x_010)))
+		self.line01y.setText(QString(str.format('{0:.4f}',distance_y_010)))
+		self.line025x.setText(QString(str.format('{0:.4f}',distance_x_025)))
+		self.line025y.setText(QString(str.format('{0:.4f}',distance_y_025)))
+		self.line05x.setText(QString(str.format('{0:.4f}',distance_x_050)))
+		self.line05y.setText(QString(str.format('{0:.4f}',distance_y_050)))
+		self.line075x.setText(QString(str.format('{0:.4f}',distance_x_075)))
+		self.line075y.setText(QString(str.format('{0:.4f}',distance_y_075)))
+		self.line09x.setText(QString(str.format('{0:.4f}',distance_x_090)))
+		self.line09y.setText(QString(str.format('{0:.4f}',distance_y_090)))
+		self.line095x.setText(QString(str.format('{0:.4f}',distance_x_095)))
+		self.line095y.setText(QString(str.format('{0:.4f}',distance_y_095)))
 
 		ax1 = self.figure.add_subplot(131) #these subplots will change (centred COP, Vel., MSE)
 		ax1.plot(CofPx, CofPy, 'k')
