@@ -16,7 +16,7 @@ def getDistance_Coverage(CofP, percent_coverage):
     distance_coverage = numpy.sort(absCenteredCofP, kind='mergesort')[indexOfCoverage]
     return(distance_coverage)
 
-def filterData(data, freqCutoff=20, samplingRate = 1000, order=2):
+def filterData(data, freqCutoff=20, samplingRate=1000, order=2):
     '''
     Inputs:
         Data: numpy arrray with one-dimensional data
@@ -35,7 +35,7 @@ def getDistanceCofP(CofP, filter=True, freqCutoff=20, samplingRate=1000, order=2
     Outputs:
         distance: numpy float object of distance traveled. 
     '''
-    if filter==True:
+    if filter == True:
         CofP = filterData(CofP, freqCutoff=freqCutoff, samplingRate=samplingRate, order=order)
     
     diff = numpy.diff(CofP)
@@ -51,7 +51,7 @@ def getDistanceBothAxes(CofPx, CofPy, filter=True, freqCutoff=20, samplingRate=1
     Outputs:
         distance: numpy float object of distance traveled - over both directions 
     '''
-    if filter==True:
+    if filter == True:
         CofPx = filterData(CofPx, freqCutoff=freqCutoff, samplingRate=samplingRate, order=order)
         CofPy = filterData(CofPy, freqCutoff=freqCutoff, samplingRate=samplingRate, order=order)
     diffX = numpy.diff(CofPx)

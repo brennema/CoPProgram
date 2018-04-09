@@ -12,7 +12,6 @@ import warnings
 import ProgramGeometry #imports layout from QtDesigner
 from HelpWindow import Ui_Dialog
 
-
 sys.path.append(os.path.join(os.getcwd(),'CofPfunctions')) # add path to CofP functions to directory
 import CofPfunctions
 
@@ -41,21 +40,27 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		self.actionAbout.setStatusTip('Program help and contact information')
 		self.actionAbout.triggered.connect(self.help)
 
-		# Select trial from list widget
+		# Connect participant code 
+		self.lineParticipant.returnPressed.connect(self.participant)
+
+		# Connect trial select
 		QObject.connect(self.listDirectory, SIGNAL("itemClicked(QListWidgetItem *)"), self.trial_select_list)
 
-		# Combo box
+		# Connect combobox index change 
 		self.comboBoxFP.currentIndexChanged.connect(self.force_plate)
 
-		# Progress bar and processing button
+		# Connect progress bar and processing button
 		self.pushProcess.clicked.connect(self.process)
 
-		# Save push bar
+		# Connect save results push button
 		self.pushSave.clicked.connect(self.save_results)
 
 
-	# Executables
 	def close_application(self):
+		'''
+		In the menu bar, there is an option to quit the application.  A pop-up window will appear to ask the user to 
+		confirm whether they want to close.  A shortcut of Ctrl+q has also been set for this execution.
+		'''
 		choice = QMessageBox.question(self, 'Quit',
 			"Are you sure you want to quit the application?",
 			QMessageBox.Yes | QMessageBox.No)
@@ -65,12 +70,20 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 			pass
 
 	def help(self):
+		'''
+		In the menu bar, there is a help option.  A separate window widget will pop up with some help features of the 
+		program.  A shortcut of Ctrl+h has also been set for this execution.
+		'''
 		self.helpwindow = QDialog()
 		self.ui = Ui_Dialog()
 		self.ui.setupUi(self.helpwindow)
 		self.helpwindow.show()
 
 	def browse_folder(self):
+		'''
+		In the menu bar, there is an option to select the directory where the trials to be processed are located.  
+		A shortcut of Ctrl+d has also been set for this execution.
+		'''
 		self.listDirectory.clear()
 		direct = QFileDialog.getExistingDirectory(self, 
 			"Pick a folder")
@@ -82,6 +95,12 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		os.chdir(str(direct))
 
 	def trial_select_list(self):
+		'''
+		In the menu bar, there is an option to select the specific trial to process.  There are two other methods to 
+		execute this command.  First there is Ctrl+t.  Second, merely clicking on the trial that populates in the 
+		Drectory List in the program will select the trial.  A pop-up window confirming the trial selection will finish
+		the exection.  
+		'''
 		fileNameTrial = self.listDirectory.currentItem().text()
 		trialSelect = QMessageBox.question(self, 'Trial select',
 			"You have chosen: " + str(fileNameTrial) + " to process.  "\
@@ -97,6 +116,9 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 			pass
 
 	def trial_open(self):
+		'''
+		See explanation in above function.
+		'''
 		trialSel = QFileDialog.getOpenFileName(self, "Choose Trial")
 
 		if trialSel:
@@ -111,7 +133,31 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 				trialName = []
 				pass
 
+	def participant(self):
+		'''
+		When a new participant is added, the program will prompt whether this is a new participant or not.  The answer
+		will be stored in 'self', for future use. 
+		'''
+		participant = str(self.lineParticipant.text())
+		part = QMessageBox.question(self, 'New Participant',
+			"Is this a new participant?",
+			QMessageBox.Yes | QMessageBox.No)
+		if part == QMessageBox.Yes:
+			chooseDirect = QFileDialog.getExistingDirectory(self, "Pick Folder to Save Results") #choose directory to save trials to
+			os.mkdir(str(os.path.join(str(chooseDirect), participant)))
+			self.saveDirectory = str((os.path.join(str(chooseDirect), participant)))
+			self.trials = 0
+		else:
+			chooseDirect1 = QFileDialog.getExistingDirectory(self, "Choose Participant Folder With Previous Saved Results")
+			self.saveDirectory = str(chooseDirect1)
+			self.trials = 0
+
 	def force_plate(self): 
+		'''
+		The choosebox allows to choose which force plate to use.  The origin of the force plate and the accompanying 
+		sensitivity matrix will be chosen.  As well, to help the user, the force plate in the figure that is chosen
+		with the groupbox will turn red. Try/except cases are presented that inform the user if something goes wrong. 
+		'''
 		numpy.set_printoptions(precision=4, suppress=True) #just for now for troubleshooting
 		xPos = self.lineX
 		yPos = self.lineY
@@ -148,8 +194,11 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 			zPos.setText(QString(str(z)))
 
 	def process(self):
+		'''
+		Main processing function.  See comments throughout. 
+		'''
 		warnings.filterwarnings("ignore")
-		numpy.set_printoptions(precision=4, suppress=True) #just for now for troubleshooting
+		numpy.set_printoptions(precision=4, suppress=True)
 		self.figure.clf() #clear any previous data in the results
 		self.lineMeanSpeedx.setText(QString())
 		self.lineMeanSpeedy.setText(QString())
@@ -176,6 +225,15 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		if len(fileNameTrial) <= 1:
 			noTrial = QMessageBox.warning(self, 'Warning', 
 				"No trial chosen!  Please select a trial to continue processing.",
+				QMessageBox.Ok)
+			return
+		else:
+			pass
+
+		participantNum = str(self.lineParticipant.text())
+		if participantNum == 'Enter Participant Code':
+			noParticipant = QMessageBox.warning(self, 'Warning',
+				"No participant entered.  Please enter a participant code.",
 				QMessageBox.Ok)
 			return
 		else:
@@ -232,10 +290,15 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		else:
 			pass
 
+		self.trials += 1
+		i = self.trials
+		print(i)
 		CofPx = ((Zo_m * (forces_moments[:, 0])) - (forces_moments[:, 4])) / forces_moments[:, 2]
 		CofPy = ((Zo_m * (forces_moments[:, 1])) - (forces_moments[:, 3])) / forces_moments[:, 2]
-		centeredCofPx = CofPx - (CofPx.mean())
-		centeredCofPy = CofPy - (CofPy.mean())
+		CofPx_filt = CofPfunctions.filterData(CofPx, freqCutoff=20, samplingRate=1000, order=2)
+		CofPy_filt = CofPfunctions.filterData(CofPy, freqCutoff=20, samplingRate=1000, order=2)
+		centeredCofPx = CofPx_filt - (CofPx_filt.mean())
+		centeredCofPy = CofPy_filt - (CofPy_filt.mean())
 		velocity_x = numpy.diff(centeredCofPx) / (1./samplingRate)
 		velocity_y = numpy.diff(centeredCofPy) / (1./samplingRate)
 		velocity_resultant = numpy.sqrt(velocity_x**2 + velocity_y**2)
@@ -249,27 +312,21 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		self.velocityy = numpy.vstack((framesVel, velocity_y))
 		self.velocity = numpy.vstack((framesVel, velocity_x, velocity_y))
 
-		self.completed = 0
-		while self.completed < 100:
-			self.completed += 0.0005
-			self.progressTrial.setValue(self.completed)
+		distance_x_005 = CofPfunctions.getDistance_Coverage(CofPx_filt, 0.05) #just making sure filtered data gets input here as filterData was not called in this function
+		distance_x_010 = CofPfunctions.getDistance_Coverage(CofPx_filt, 0.1)
+		distance_x_025 = CofPfunctions.getDistance_Coverage(CofPx_filt, 0.25)
+		distance_x_050 = CofPfunctions.getDistance_Coverage(CofPx_filt, 0.5)
+		distance_x_075 = CofPfunctions.getDistance_Coverage(CofPx_filt, 0.75)
+		distance_x_090 = CofPfunctions.getDistance_Coverage(CofPx_filt, 0.9)
+		distance_x_095 = CofPfunctions.getDistance_Coverage(CofPx_filt, 0.95)
 
-
-		distance_x_005 = CofPfunctions.getDistance_Coverage(CofPx, 0.05)
-		distance_x_010 = CofPfunctions.getDistance_Coverage(CofPx, 0.1)
-		distance_x_025 = CofPfunctions.getDistance_Coverage(CofPx, 0.25)
-		distance_x_050 = CofPfunctions.getDistance_Coverage(CofPx, 0.5)
-		distance_x_075 = CofPfunctions.getDistance_Coverage(CofPx, 0.75)
-		distance_x_090 = CofPfunctions.getDistance_Coverage(CofPx, 0.9)
-		distance_x_095 = CofPfunctions.getDistance_Coverage(CofPx, 0.95)
-
-		distance_y_005 = CofPfunctions.getDistance_Coverage(CofPy, 0.05)
-		distance_y_010 = CofPfunctions.getDistance_Coverage(CofPy, 0.1)
-		distance_y_025 = CofPfunctions.getDistance_Coverage(CofPy, 0.25)
-		distance_y_050 = CofPfunctions.getDistance_Coverage(CofPy, 0.5)
-		distance_y_075 = CofPfunctions.getDistance_Coverage(CofPy, 0.75)
-		distance_y_090 = CofPfunctions.getDistance_Coverage(CofPy, 0.9)
-		distance_y_095 = CofPfunctions.getDistance_Coverage(CofPy, 0.95)
+		distance_y_005 = CofPfunctions.getDistance_Coverage(CofPy_filt, 0.05)
+		distance_y_010 = CofPfunctions.getDistance_Coverage(CofPy_filt, 0.1)
+		distance_y_025 = CofPfunctions.getDistance_Coverage(CofPy_filt, 0.25)
+		distance_y_050 = CofPfunctions.getDistance_Coverage(CofPy_filt, 0.5)
+		distance_y_075 = CofPfunctions.getDistance_Coverage(CofPy_filt, 0.75)
+		distance_y_090 = CofPfunctions.getDistance_Coverage(CofPy_filt, 0.9)
+		distance_y_095 = CofPfunctions.getDistance_Coverage(CofPy_filt, 0.95)
 
 		distance_x = CofPfunctions.getDistanceCofP(CofPx, filter=True, freqCutoff=20, samplingRate=1000, order=2)
 		distance_y = CofPfunctions.getDistanceCofP(CofPy, filter=True, freqCutoff=20, samplingRate=1000, order=2)
@@ -279,30 +336,34 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		speed_y = distance_y/((1./samplingRate) * len(CofPy)) 
 		speed_xy = distance_xy/((1./samplingRate) * len(CofPx)) 
 
+		self.completed = 0
+		while self.completed < 100:
+			self.completed += 0.0005
+			self.progressTrial.setValue(self.completed)
 
 
-		######### Populate these with the new variables
-		self.lineMeanSpeedx.setText(QString(str.format('{0:.4f}',speed_x)))
-		self.lineMeanSpeedy.setText(QString(str.format('{0:.4f}',speed_y)))
-		self.lineDistancex.setText(QString(str.format('{0:.4f}',distance_x)))
-		self.lineDistancey.setText(QString(str.format('{0:.4f}',distance_y)))
+		# Populate these with the new variables
+		self.lineMeanSpeedx.setText(QString(str.format('{0:.4f}', speed_x)))
+		self.lineMeanSpeedy.setText(QString(str.format('{0:.4f}', speed_y)))
+		self.lineDistancex.setText(QString(str.format('{0:.4f}', distance_x)))
+		self.lineDistancey.setText(QString(str.format('{0:.4f}', distance_y)))
 		#self.lineMSEx.setText(QString())
 		#self.lineMSEy.setText(QString())
 
-		self.line005x.setText(QString(str.format('{0:.4f}',distance_x_005)))
-		self.line005y.setText(QString(str.format('{0:.4f}',distance_y_005)))
-		self.line01x.setText(QString(str.format('{0:.4f}',distance_x_010)))
-		self.line01y.setText(QString(str.format('{0:.4f}',distance_y_010)))
-		self.line025x.setText(QString(str.format('{0:.4f}',distance_x_025)))
-		self.line025y.setText(QString(str.format('{0:.4f}',distance_y_025)))
-		self.line05x.setText(QString(str.format('{0:.4f}',distance_x_050)))
-		self.line05y.setText(QString(str.format('{0:.4f}',distance_y_050)))
-		self.line075x.setText(QString(str.format('{0:.4f}',distance_x_075)))
-		self.line075y.setText(QString(str.format('{0:.4f}',distance_y_075)))
-		self.line09x.setText(QString(str.format('{0:.4f}',distance_x_090)))
-		self.line09y.setText(QString(str.format('{0:.4f}',distance_y_090)))
-		self.line095x.setText(QString(str.format('{0:.4f}',distance_x_095)))
-		self.line095y.setText(QString(str.format('{0:.4f}',distance_y_095)))
+		self.line005x.setText(QString(str.format('{0:.4f}', distance_x_005)))
+		self.line005y.setText(QString(str.format('{0:.4f}', distance_y_005)))
+		self.line01x.setText(QString(str.format('{0:.4f}', distance_x_010)))
+		self.line01y.setText(QString(str.format('{0:.4f}', distance_y_010)))
+		self.line025x.setText(QString(str.format('{0:.4f}', distance_x_025)))
+		self.line025y.setText(QString(str.format('{0:.4f}', distance_y_025)))
+		self.line05x.setText(QString(str.format('{0:.4f}', distance_x_050)))
+		self.line05y.setText(QString(str.format('{0:.4f}', distance_y_050)))
+		self.line075x.setText(QString(str.format('{0:.4f}', distance_x_075)))
+		self.line075y.setText(QString(str.format('{0:.4f}', distance_y_075)))
+		self.line09x.setText(QString(str.format('{0:.4f}', distance_x_090)))
+		self.line09y.setText(QString(str.format('{0:.4f}', distance_y_090)))
+		self.line095x.setText(QString(str.format('{0:.4f}', distance_x_095)))
+		self.line095y.setText(QString(str.format('{0:.4f}', distance_y_095)))
 
 		ax1 = self.figure.add_subplot(131) #these subplots will change (centred COP, Vel., MSE)
 		ax1.plot(CofPx, CofPy, 'k')
@@ -317,6 +378,19 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		ax3.legend()
 		self.canvas.draw()
 
+		table = pd.DataFrame(columns=[['Filename', 'Mean Speed (COPx)', 'Mean Speed (COPy)', 'Distance COPx', 
+			'Distance COPy', '5', '10', '25', '50', '75', '90', '95', '5', '10', '25', '50', '75', '90', '95']])
+		table.loc[0] = [str(self.lineTrialName.text()), str(self.lineMeanSpeedx.text()), str(self.lineMeanSpeedy.text()), 
+			str(self.lineDistancex.text()), str(self.lineDistancey.text()), str(self.line005x.text()), str(self.line01x.text()), 
+			str(self.line025x.text()), str(self.line05x.text()), str(self.line075x.text()), str(self.line09x.text()), str(self.line095x.text()), 
+			str(self.line005y.text()), str(self.line01y.text()), str(self.line025y.text()), str(self.line05y.text()), str(self.line075y.text()),
+			str(self.line09y.text()), str(self.line095y.text())]
+		allTables = {}
+		allTables[i] = table
+		print(allTables) #theoretically, in my brain, this should work as each trial is processed.  The button click steps i by 1, then indexes
+		# the dataframe.  But when I print it with every trial that gets processed that is not the case (overwritten).  I've wasted
+		# too much time on this so I'm passing it to you if you have any better ideas. 
+
 	def save_results(self):
 		centredCofPx = self.centredCofPx #this way, only ML or AP can be saved... or both if both are clicked
 		centredCofPy = self.centredCofPy
@@ -324,6 +398,7 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		velocityx = self.velocityx
 		velocityy = self.velocityy
 		velocity = self.velocity
+		os.chdir(self.saveDirectory)
 		if self.checkBoxCOPPos.isChecked() and self.checkBoxCOPPosy.isChecked():
 			datafr = pd.DataFrame(centredCofP.T, columns=['Frames', 'COPx', 'COPy'])
 			filepath = str(self.lineTrialName.text()) + '_COP_Position.xlsx'
@@ -352,6 +427,17 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 			filepaths = str(self.lineTrialName.text()) + '_COP_Velocityy.xlsx'
 			datafra.to_excel(filepaths, index=False)
 		elif not self.checkBoxCOPVel.isChecked() and self.checkBoxCOPVely.isChecked():
+			pass
+
+		i = self.trials
+		table = self.table
+		for tr in range(i):
+			finalTable = table.append(table[i])
+		print(finalTable)
+		if self.checkBoxTable.isChecked():
+			filepaths = str(self.lineTrialName.text()) + '_Table_Results.xlsx'
+			finalTable.to_excel(filepaths, index=False)
+		elif not self.checkBoxTable.isChecked():
 			pass
 
 
