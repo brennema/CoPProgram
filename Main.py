@@ -336,6 +336,16 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		speed_y = distance_y/((1./samplingRate) * len(CofPy)) 
 		speed_xy = distance_xy/((1./samplingRate) * len(CofPx)) 
 
+		mse_x = filterGetMSE_coarse(CofPx-CofPx.mean(), r_fraction=0.15, max_scale_factor=40, 
+                        emb_dim=2, downsampleFactor=4, lowerFreqCutoff=0.28, 
+                        upperFreqCutoff=20, samplingRate=1000)
+		mse_y = filterGetMSE_coarse(CofPy-CofPy.mean(), r_fraction=0.15, max_scale_factor=40, 
+                        emb_dim=2, downsampleFactor=4, lowerFreqCutoff=0.28, 
+                        upperFreqCutoff=20, samplingRate=1000)
+
+		mse_x_area = numpy.trapz(mse_x)
+		mse_y_area = numpy.trapz(mse_y)
+
 		self.completed = 0
 		while self.completed < 100:
 			self.completed += 0.0005
@@ -347,8 +357,8 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		self.lineMeanSpeedy.setText(QString(str.format('{0:.4f}', speed_y)))
 		self.lineDistancex.setText(QString(str.format('{0:.4f}', distance_x)))
 		self.lineDistancey.setText(QString(str.format('{0:.4f}', distance_y)))
-		#self.lineMSEx.setText(QString())
-		#self.lineMSEy.setText(QString())
+		self.lineMSEx.setText(QString(str.format('{0:.4f}', mse_x_area)))
+		self.lineMSEy.setText(QString(str.format('{0:.4f}', mse_y_area)))
 
 		self.line005x.setText(QString(str.format('{0:.4f}', distance_x_005)))
 		self.line005y.setText(QString(str.format('{0:.4f}', distance_y_005)))
