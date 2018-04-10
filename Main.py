@@ -145,16 +145,15 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 			"Is this a new participant?",
 			QMessageBox.Yes | QMessageBox.No)
 		if part == QMessageBox.Yes:
-			# chooseDirect = QFileDialog.getExistingDirectory(self, "Pick Folder to Save Results") #choose directory to save trials to
-			# os.mkdir(str(os.path.join(str(chooseDirect), participant)))
-			# self.saveDirectory = str((os.path.join(str(chooseDirect), participant)))
-			table = pd.DataFrame({'Filename':[], 'Mean Speed (COPx)':[], 'Mean Speed (COPy)':[], 'Distance COPx':[], 
+			self.table = pd.DataFrame({'Filename':[], 'Mean Speed (COPx)':[], 'Mean Speed (COPy)':[], 'Distance COPx':[], 
 				'Distance COPy':[], 'x5':[], 'x10':[], 'x25':[], 'x50':[], 'x75':[], 'x90':[], 'x95':[], 'y5':[], 'y10':[], 
 				'y25':[], 'y50':[], 'y75':[], 'y90':[], 'y95':[]}, columns=['Filename', 'Mean Speed (COPx)', 'Mean Speed (COPy)', 
 				'Distance COPx', 'Distance COPy', 'x5', 'x10', 'x25', 'x50', 'x75', 'x90', 'x95', 'y5', 'y10', 'y25', 'y50', 
 				'y75', 'y90', 'y95'])
-			self.table = table
-			self.trials = 0
+			self.position_table = pd.DataFrame()
+			self.velocity_table = pd.DataFrame()
+			self.mse_table = pd.DataFrame()
+			self.trial = 1
 		else:
 			# chooseDirect1 = QFileDialog.getExistingDirectory(self, "Choose Participant Folder With Previous Saved Results")
 			# self.saveDirectory = str(chooseDirect1)
@@ -332,6 +331,7 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		self.velocityy = numpy.vstack((framesVel, velocity_y))
 		self.velocity = numpy.vstack((framesVel, velocity_x, velocity_y))
 
+
 		distance_x_005 = CofPfunctions.getDistance_Coverage(CofPx_filt, 0.05) #just making sure filtered data gets input here as filterData was not called in this function
 		distance_x_010 = CofPfunctions.getDistance_Coverage(CofPx_filt, 0.1)
 		distance_x_025 = CofPfunctions.getDistance_Coverage(CofPx_filt, 0.25)
@@ -368,11 +368,11 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 
 		######## ARBITRARY PROGRESS UPDATE ##########
 		self.progressTrial.setValue(50)
-		mse_x = 1
-		mse_y = 2
+		mse_x = numpy.random.randint(1000,size=40)
+		mse_y = numpy.random.randint(1000,size=40)
 
-		mse_x_area = 1 #numpy.trapz(mse_x)
-		mse_y_area = 2 #numpy.trapz(mse_y)
+		mse_x_area = numpy.trapz(mse_x)
+		mse_y_area = numpy.trapz(mse_y)
 
 		######## ARBITRARY PROGRESS UPDATE ##########
 		self.progressTrial.setValue(80)
@@ -439,15 +439,30 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 			'x10':distance_x_010, 'x25':distance_x_025, 'x50':distance_x_050, 'x75':distance_x_075, 'x90':distance_x_090, 
 			'x95':distance_x_095, 'y5':distance_y_005, 'y10':distance_y_010, 'y25':distance_y_025, 'y50':distance_y_050, 
 			'y75':distance_y_075, 'y90':distance_y_090, 'y95':distance_y_095}, ignore_index=True)
+
+		# if self.trial==0:
+		# COULD TO IF STATEMENT HERE AND ONLY DO FRAMES IF IT IS TRIAL 1, BUT I DONT THINK ITS NEEDED - AND THIS IS BETTER IN ODD EVENT 
+		# THAT THE FRAMES ARE DIFFERENT BETWEEN TRIALS
+		velocity_df = pd.DataFrame({'Frames': framesVel.T, 'Velocity_x':velocity_x.T, 'Velocity_y':velocity_y.T})
+		columns_velocity = [('Trial ' + str(self.trial), 'Frames'), ('Trial ' + str(self.trial), 'Velocity_x'), ('Trial ' + str(self.trial), 'Velocity_y')]
+		velocity_df.columns = pd.MultiIndex.from_tuples(columns_velocity)
+		self.velocity_table = pd.concat([self.velocity_table, velocity_df], axis=1)
+
+		position_df = pd.DataFrame({'Frames': framesPos.T, 'Position_x':centeredCofPx.T, 'Position_y':centeredCofPy.T})
+		columns_position = [('Trial ' + str(self.trial), 'Frames'), ('Trial ' + str(self.trial), 'Position_x'), ('Trial ' + str(self.trial), 'Position_y')]
+		position_df.columns = pd.MultiIndex.from_tuples(columns_position)
+		self.position_table = pd.concat([self.position_table, position_df], axis=1)
+
+		mse_df = pd.DataFrame({'Frames': numpy.arange(1,len(mse_x)+1,1), 'MSE_x':mse_x, 'MSE_y':mse_y})
+		columns_mse = [('Trial ' + str(self.trial), 'Frames'), ('Trial ' + str(self.trial), 'MSE_x'), ('Trial ' + str(self.trial), 'MSE_y')]
+		mse_df.columns = pd.MultiIndex.from_tuples(columns_mse)
+		self.mse_table = pd.concat([self.mse_table, mse_df], axis=1)
+
+		self.trial+=1
+
 		
 		######## ARBITRARY PROGRESS UPDATE ##########
 		self.progressTrial.setValue(100)
-
-		# allTables = {}
-		# allTables[i] = table
-		# print(allTables) #theoretically, in my brain, this should work as each trial is processed.  The button click steps i by 1, then indexes
-		# # the dataframe.  But when I print it with every trial that gets processed that is not the case (overwritten).  I've wasted
-		# # too much time on this so I'm passing it to you if you have any better ideas. 
 
 	def save_results(self):
 		centredCofPx = self.centredCofPx #this way, only ML or AP can be saved... or both if both are clicked
@@ -461,44 +476,19 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		self.dataFilesLocation
 		saveLocation = str(os.path.join(self.dataFilesLocation, resultsFolderName))
 		os.mkdir(saveLocation)
-		# os.chdir(saveLocation)
-		# os.chdir(self.saveDirectory)
 
 		if self.checkBoxCOPPos.isChecked() and self.checkBoxCOPPosy.isChecked():
-			datafr = pd.DataFrame(centredCofP.T, columns=['Frames', 'COPx', 'COPy'])
 			filepath = os.path.join(saveLocation, str(self.lineTrialName.text()) + '_COP_Position.xlsx')
-			datafr.to_excel(filepath, index=False)
-		elif self.checkBoxCOPPos.isChecked():
-			datafr = pd.DataFrame(centredCofPx.T, columns=['Frames', 'COPx'])
-			filepath = os.path.join(saveLocation, str(self.lineTrialName.text()) + '_COP_Positionx.xlsx')
-			datafr.to_excel(filepath, index=False)
-		elif self.checkBoxCOPPosy.isChecked():
-			datafr = pd.DataFrame(centredCofPy.T, columns=['Frames', 'COPy'])
-			filepath = os.path.join(saveLocation, str(self.lineTrialName.text()) + '_COP_Positiony.xlsx')
-			datafr.to_excel(filepath, index=False)
+			self.position_table.to_excel(filepath)
 		elif not self.checkBoxCOPPos.isChecked() and self.checkBoxCOPPosy.isChecked():
 			pass
 
 		if self.checkBoxCOPVel.isChecked() and self.checkBoxCOPVely.isChecked():
-			datafra = pd.DataFrame(velocity.T, columns=['Frames', 'COPx Vel.', 'COPy Vel.'])
 			filepaths = os.path.join(saveLocation, str(self.lineTrialName.text()) + '_COP_Velocity.xlsx')
-			datafra.to_excel(filepaths, index=False)
-		elif self.checkBoxCOPVel.isChecked():
-			datafra = pd.DataFrame(velocityx.T, columns=['Frames', 'COPx Vel.'])
-			filepaths = os.path.join(saveLocation, str(self.lineTrialName.text()) + '_COP_Velocityx.xlsx')
-			datafra.to_excel(filepaths, index=False)
-		elif self.checkBoxCOPVely.isChecked():
-			datafra = pd.DataFrame(velocityy.T, columns=['Frames', 'COPy Vel.'])
-			filepaths = os.path.join(saveLocation, str(self.lineTrialName.text()) + '_COP_Velocityy.xlsx')
-			datafra.to_excel(filepaths, index=False)
+			self.velocity_table.to_excel(filepaths)
 		elif not self.checkBoxCOPVel.isChecked() and self.checkBoxCOPVely.isChecked():
 			pass
 
-		# i = self.trials
-		# table = self.table
-		# for tr in range(i):
-		# 	finalTable = table.append(table[i])
-		# print(finalTable)
 		if self.checkBoxTable.isChecked():
 			filepaths = os.path.join(saveLocation, str(self.lineTrialName.text()) + '_Table_Results.xlsx')
 			self.table.to_excel(filepaths, index=False)
