@@ -472,7 +472,7 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		velocityy = self.velocityy
 		velocity = self.velocity
 
-		resultsFolderName = 'Results_'+time.strftime("%d-%B-%Y_%I:%M%p")
+		resultsFolderName = 'Results_'+time.strftime("%d-%B-%Y_%I-%M%p")
 		self.dataFilesLocation
 		saveLocation = str(os.path.join(self.dataFilesLocation, resultsFolderName))
 		os.mkdir(saveLocation)
