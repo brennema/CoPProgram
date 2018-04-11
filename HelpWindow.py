@@ -33,17 +33,20 @@ class Ui_Dialog(object):
             "the consent of the original creators.  They can be contacted at:\n"\
             "       Elora Brenneman: brennema@mcmaster.ca\n"\
             "       Anthony Gatti: gattia@mcmaster.ca\n"
-            "--------------------------------------------------\n"
+            "----------------------------------------------------------------------------------\n"
             "This program takes raw voltage data collected from AMTI OR6-7 force plates and returns variables of interest related to centre of pressure.  "\
-            "Specifcally, centre of pressure position (m), velocity (m/s), and mutli-scale entropy are calculated and available for export.  To run the "\
-            "program, a working directory (directory containing trials to be processed) must be pulled into the program using one of two methods: through the File "\
-            "menu, or using the shortcut Ctrl+D.  Once the directory is listed in the 'Set-up Processing Parameters' tab, the desired trial can be chosen using "\
+            "Specifcally, centre of pressure position (m), velocity (m/s), and mutli-scale entropy are calculated and available for export.  In addition, "\
+            "CoP coverage, mean speed, and distance are available for export in tabular format.  To run the "\
+            "program, a participant code needs to be typed into the editable box in the top left corner of the Set-up Force Plate Parameters tab.  Next, "
+            "a working directory (directory containing trials to be processed) must be pulled into the program using one of two methods: through the File "\
+            "menu, or using the shortcut Ctrl+D.  Once the directory is listed, the desired trial can be chosen using "\
             "one of three methods: directly clicking on the trial in the directory list, through the File menu, or by using the shortcut Ctrl+O.  A pop-up message "\
             "will ask the user to confirm the chosen trial.  Once confirmed, the trial name will appear in the text box near the 'Process Trial' button.  Next, "\
             "a force plate must be chosen.  The force plate origin (x, y, z) will populate and a figure indicating the chosen force plate will appear.  The "\
-            "'Process Trial' button will process the data.  All results will appear in the 'Results' tab.  Finally, "\
-            "any desired outputs can be saved by indicating checkmarks in the boxes next to the variables of interest.  Pressing the 'Save' button will save "
-            "these results in the same directory as the original trials.  For more information, contact Elora or Anthony.")
+            "'Process Trial' button will process the data.  All results will appear in the 'Results' tab.  Additional trials for the same participant can be "\
+            "processed using the above steps.  At the end of processing, any desired outputs can be saved by indicating checkmarks in the boxes next to the "\
+            "variables of interest.  The outputs will be saved in a generated Results folder (it will contain the participant code and a date/time stamp).  "\
+            "For more information, contact Elora or Anthony.")
         self.textEdit.setText(text)
 
         self.retranslateUi(Dialog)

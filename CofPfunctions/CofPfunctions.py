@@ -1,5 +1,7 @@
 from scipy import signal 
 import numpy
+# from PyEMD import EMD
+# import neurokit
 
 def getDistance_Coverage(CofP, percent_coverage):
     '''
@@ -60,3 +62,71 @@ def getDistanceBothAxes(CofPx, CofPy, filter=True, freqCutoff=20, samplingRate=1
     absDistance = numpy.abs(distance)
     totalDistance = numpy.sum(absDistance)
     return(totalDistance)
+
+def getFreqDataOfIMF(imf, samplingRate=1000/4):
+    '''
+    Inputs:
+        imf: numpy arrray with one-dimensional data - individual IMF
+    Outputs:
+        medianFreq: numpy float of the dominant frequency of IMF
+    '''
+    spectrumOfData = abs(numpy.fft.fft(imf))
+    freq = abs(numpy.fft.fftfreq(len(spectrumOfData), (1./samplingRate)))
+    threshold =  numpy.sort((spectrumOfData))[-4]
+    dominantData = freq[spectrumOfData > threshold]
+    medianFreq = numpy.median(dominantData)
+    return(medianFreq)
+
+def EMDfilterData(data, lowerFreqCutoff=0.28,upperFreqCutoff=20, samplingRate = 1000/4):
+    '''
+    Inputs:
+        Data: numpy arrray with one-dimensional data
+    Outputs:
+        filteredData: numpy array of data after filtering
+    '''
+    emd = EMD()
+    IMFs = emd.emd(data)
+    outputSignal = numpy.zeros_like(data)
+    for imf in range(IMFs.shape[0]):
+        imfFrequency = getFreqDataOfIMF(IMFs[imf,:])
+        if imfFrequency > upperFreqCutoff:
+            pass
+        elif imfFrequency < lowerFreqCutoff:
+            pass
+        else:
+            outputSignal += IMFs[imf,:]
+    return(outputSignal)
+
+
+def getMSE_coarse(data, r_fraction=0.15, max_scale_factor=40, emb_dim=2):
+    '''
+    Inputs:
+        Data: numpy arrray with one-dimensional data
+    Outputs:
+        coarse_result: numpy array of sample entropy for each scale factor upto max_scale_factor. 
+    '''
+    r = r_fraction*numpy.std(data)
+    coarse_result = neurokit.complexity_entropy_multiscale(data, max_scale_factor=max_scale_factor, 
+                                                           emb_dim=emb_dim, tolerance=r, 
+                                                           return_coarse_results=True)
+    return(coarse_result)
+
+
+def filterGetMSE_coarse(data, r_fraction=0.15, max_scale_factor=40, 
+                        emb_dim=2, downsampleFactor=4, lowerFreqCutoff=0.28, 
+                        upperFreqCutoff=20, samplingRate=1000):
+    '''
+    Inputs:
+        Data: numpy arrray with one-dimensional data
+    Outputs:
+        coarse_result: numpy array of sample entropy for each scale factor upto max_scale_factor.
+        Data is filtered before performing analysis. 
+    '''
+    downsampledData = data[0::downsampleFactor]
+    downsampledSamplingRate = samplingRate/downsampleFactor
+    filtered_data = EMDfilterData(data, lowerFreqCutoff=lowerFreqCutoff,
+                                  upperFreqCutoff=upperFreqCutoff, 
+                                  samplingRate=downsampledSamplingRate)
+    coarse_mse_result = getMSE_coarse(filtered_data, r_fraction=r_fraction, 
+                                      max_scale_factor=max_scale_factor, emb_dim=emb_dim)
+    return(coarse_mse_result[0,:])

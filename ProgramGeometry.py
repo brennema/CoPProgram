@@ -30,11 +30,11 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(1292, 650)
+        MainWindow.resize(1292, 700)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.tabWidget = QtGui.QTabWidget(self.centralwidget)
-        self.tabWidget.setGeometry(QtCore.QRect(10, 0, 1271, 605))
+        self.tabWidget.setGeometry(QtCore.QRect(10, 0, 1271, 655))
         font = QtGui.QFont()
         font.setPointSize(10)
         self.tabWidget.setFont(font)
@@ -244,40 +244,35 @@ class Ui_MainWindow(object):
         self.checkBoxCOPPos = QtGui.QCheckBox(self.groupBoxSave)
         self.checkBoxCOPPos.setObjectName(_fromUtf8("checkBoxCOPPos"))
         self.gridLayout_3.addWidget(self.checkBoxCOPPos, 0, 0, 1, 1)
-        self.checkBoxCOPPosy = QtGui.QCheckBox(self.groupBoxSave)
-        self.checkBoxCOPPosy.setObjectName(_fromUtf8("checkBoxCOPPosy"))
-        self.gridLayout_3.addWidget(self.checkBoxCOPPosy, 1, 0, 1, 1)
         self.checkBoxCOPVel = QtGui.QCheckBox(self.groupBoxSave)
         self.checkBoxCOPVel.setObjectName(_fromUtf8("checkBoxCOPVel"))
-        self.gridLayout_3.addWidget(self.checkBoxCOPVel, 2, 0, 1, 1)
-        self.checkBoxCOPVely = QtGui.QCheckBox(self.groupBoxSave)
-        self.checkBoxCOPVely.setObjectName(_fromUtf8("checkBoxCOPVely"))
-        self.gridLayout_3.addWidget(self.checkBoxCOPVely, 3, 0, 1, 1)
+        self.gridLayout_3.addWidget(self.checkBoxCOPVel, 1, 0, 1, 1)
         self.checkBoxMSE = QtGui.QCheckBox(self.groupBoxSave)
         self.checkBoxMSE.setObjectName(_fromUtf8("checkBoxMSE"))
-        self.gridLayout_3.addWidget(self.checkBoxMSE, 4, 0, 1, 1)
-        self.checkBoxMSEy = QtGui.QCheckBox(self.groupBoxSave)
-        self.checkBoxMSEy.setObjectName(_fromUtf8("checkBoxMSEy"))
-        self.gridLayout_3.addWidget(self.checkBoxMSEy, 5, 0, 1, 1)
+        self.gridLayout_3.addWidget(self.checkBoxMSE, 2, 0, 1, 1)
         self.checkBoxTable = QtGui.QCheckBox(self.groupBoxSave)
         self.checkBoxTable.setObjectName(_fromUtf8("checkBoxTable"))
-        self.gridLayout_3.addWidget(self.checkBoxTable, 6, 0, 1, 1)
+        self.gridLayout_3.addWidget(self.checkBoxTable, 3, 0, 1, 1)
         self.pushSave = QtGui.QPushButton(self.groupBoxSave)
         self.pushSave.setObjectName(_fromUtf8("pushSave"))
-        self.gridLayout_3.addWidget(self.pushSave, 7, 0, 1, 1)
+        self.gridLayout_3.addWidget(self.pushSave, 4, 0, 1, 1)
+        self.formLayoutResults.setWidget(3, QtGui.QFormLayout.LabelRole, self.groupBoxSave)
+
         # add static text
-        self.textFPHelp = QtGui.QTextEdit(self.groupBoxSave)
+        self.textFPHelp = QtGui.QTextEdit(self.tab_2)
         self.textFPHelp.setReadOnly(True)
-        textFP = ("Note: When the participant is standing facing the back wall (or toward the cart with the equipment):\n"
-            "                CoPx = A/P direction \n"
-            "                CoPy = M/L direction \n"
-            "Alternatively, if the participant is facing the wall with the collection computer (or toward the wall "\
-            "partition): \n"
-            "                CoPx = M/L direction \n"
-            "                CoPy = A/P direction \n")
+        textFP = ("\n"
+            "                                                                                                    NOTE \n"
+            "                                         -------------------------------------------------------------------------------------------------------------\n"
+            "                                                   If the participant is facing the back wall (or toward the force plate equipment):\n"
+            "                                                                                          CoPx = A/P direction \n"
+            "                                                                                          CoPy = M/L direction \n"
+            "                                           If the participant is facing the wall with the collection computer (or toward the wall partition): \n"
+            "                                                                                          CoPx = M/L direction \n"
+            "                                                                                          CoPy = A/P direction \n")
         self.textFPHelp.setText(textFP)
-        self.gridLayout_3.addWidget(self.textFPHelp, 1, 1, 6, 1)
-        self.formLayoutResults.setWidget(0, QtGui.QFormLayout.LabelRole, self.groupBoxSave)
+        #self.gridLayout_3.addWidget(self.textFPHelp, 0, 1, 4, 1)
+        self.formLayoutResults.setWidget(3, QtGui.QFormLayout.FieldRole, self.textFPHelp)
         self.tabWidget.addTab(self.tab_2, _fromUtf8(""))
         MainWindow.setCentralWidget(self.centralwidget)
         # Third groupbox - Excursion Results
@@ -457,8 +452,8 @@ class Ui_MainWindow(object):
         self.figure = plt.figure()    
         self.canvas = FigureCanvas(self.figure)     
         self.toolbar = NavigationToolbar(self.canvas, self)
-        self.formLayoutResults.setWidget(0, QtGui.QFormLayout.FieldRole, self.canvas)
-        self.formLayoutResults.setWidget(1, QtGui.QFormLayout.FieldRole, self.toolbar)
+        self.formLayoutResults.setWidget(0, QtGui.QFormLayout.SpanningRole, self.canvas)
+        self.formLayoutResults.setWidget(1, QtGui.QFormLayout.SpanningRole, self.toolbar)
         # Menu bar characterization
         self.menubar = QtGui.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1292, 21))
@@ -535,12 +530,9 @@ class Ui_MainWindow(object):
         self.labelCOPy.setText(_translate("MainWindow", "CoPy", None))
         self.labelCOPx.setText(_translate("MainWindow", "CoPx", None))
         self.groupBoxSave.setTitle(_translate("MainWindow", "Save", None))
-        self.checkBoxCOPPos.setText(_translate("MainWindow", "CoPx Position (m)", None))
-        self.checkBoxCOPPosy.setText(_translate("MainWindow", "CoPy Position (m)", None))
-        self.checkBoxCOPVel.setText(_translate("MainWindow", "CoPx Velocity (m/s)", None))
-        self.checkBoxCOPVely.setText(_translate("MainWindow", "CoPy Velocity (m/s)", None))
-        self.checkBoxMSE.setText(_translate("MainWindow", "Multi-Scale Entropy (x)", None))
-        self.checkBoxMSEy.setText(_translate("MainWindow", "Multi-Scale Entropy (y)", None))
+        self.checkBoxCOPPos.setText(_translate("MainWindow", "CoP Position (m)", None))
+        self.checkBoxCOPVel.setText(_translate("MainWindow", "CoP Velocity (m/s)", None))
+        self.checkBoxMSE.setText(_translate("MainWindow", "Multi-Scale Entropy", None))
         self.checkBoxTable.setText(_translate("MainWindow", "Mean Speed, Distance, Coverage", None))
         self.pushSave.setText(_translate("MainWindow", "Save Results", None))
         self.groupBoxResults2.setTitle(_translate("MainWindow", "CoP Coverage", None))
@@ -560,7 +552,6 @@ class Ui_MainWindow(object):
         self.actionOpen_Trial.setText(_translate("MainWindow", "Open Trial", None))
         self.actionQuit_Application.setText(_translate("MainWindow", "Quit Application", None))
         self.actionAbout.setText(_translate("MainWindow", "About", None))
-        #self.actionBack_to_Program.setText(_translate("MainWindow", "Back to Program", None))
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import sys
 import os
+import time
 import numpy
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -93,6 +94,7 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 				self.listDirectory.addItem(file_name)
 
 		os.chdir(str(direct))
+		self.dataFilesLocation = str(direct)
 
 	def trial_select_list(self):
 		'''
@@ -139,18 +141,24 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		will be stored in 'self', for future use. 
 		'''
 		participant = str(self.lineParticipant.text())
-		part = QMessageBox.question(self, 'New Participant',
-			"Is this a new participant?",
-			QMessageBox.Yes | QMessageBox.No)
+		part = QMessageBox.question(self, 'Participant',
+			"Is this the correct participant code?",
+			QMessageBox.Yes | QMessageBox.No) # I changed this.  Since the results save with a time/day stamp I think it doesn't matter if the participant folder already exists.
 		if part == QMessageBox.Yes:
-			chooseDirect = QFileDialog.getExistingDirectory(self, "Pick Folder to Save Results") #choose directory to save trials to
-			os.mkdir(str(os.path.join(str(chooseDirect), participant)))
-			self.saveDirectory = str((os.path.join(str(chooseDirect), participant)))
-			self.trials = 0
+			self.table = pd.DataFrame({'Filename':[], 'Mean Speed (COPx)':[], 'Mean Speed (COPy)':[], 'Distance COPx':[], 
+				'Distance COPy':[], 'x5':[], 'x10':[], 'x25':[], 'x50':[], 'x75':[], 'x90':[], 'x95':[], 'y5':[], 'y10':[], 
+				'y25':[], 'y50':[], 'y75':[], 'y90':[], 'y95':[]}, columns=['Filename', 'Mean Speed (COPx)', 'Mean Speed (COPy)', 
+				'Distance COPx', 'Distance COPy', 'x5', 'x10', 'x25', 'x50', 'x75', 'x90', 'x95', 'y5', 'y10', 'y25', 'y50', 
+				'y75', 'y90', 'y95'])
+			self.position_table = pd.DataFrame()
+			self.velocity_table = pd.DataFrame()
+			self.mse_table = pd.DataFrame()
+			self.trial = 1
+
+			# Clear the directory list.  This triggers for the user that they need to choose a new directory with new participant trials. 
+			self.listDirectory.clear()
 		else:
-			chooseDirect1 = QFileDialog.getExistingDirectory(self, "Choose Participant Folder With Previous Saved Results")
-			self.saveDirectory = str(chooseDirect1)
-			self.trials = 0
+			pass
 
 	def force_plate(self): 
 		'''
@@ -197,6 +205,9 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		'''
 		Main processing function.  See comments throughout. 
 		'''
+		######## ARBITRARY PROGRESS UPDATE ##########
+		self.progressTrial.setValue(0)
+
 		warnings.filterwarnings("ignore")
 		numpy.set_printoptions(precision=4, suppress=True)
 		self.figure.clf() #clear any previous data in the results
@@ -271,17 +282,23 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 			forcePlateAnalog = numpy.asarray(analog_data.loc[:,['Analog_7', 'Analog_8', 'Analog_9', 'Analog_10', 
 				'Analog_11', 'Analog_12',]])
 
+		######## ARBITRARY PROGRESS UPDATE ##########
+		self.progressTrial.setValue(10)
+
 		samplingRate = int(self.lineSampling.text())
-		samplingDuration = int(self.lineDuration.text()) #added trial duration in seconds
+		samplingDuration = int(self.lineDuration.text()) 
 		gain = int(self.lineGain.text())
 		vMax = int(self.lineVMax.text())
 		multiplier = float(self.lineMult.text())
 		Zo_m = float(self.lineZ.text())/1000
-		timeVel = numpy.linspace(0, samplingDuration, ((samplingRate * samplingDuration)-1)) #instead of hard-coding for specific sampling rates, durations
+		timeVel = numpy.linspace(0, samplingDuration, ((samplingRate * samplingDuration)-1)) 
 		forces_moments = numpy.matmul(sensitivityMatrix, forcePlateAnalog.T).T
 		forces_moments = forces_moments/(gain*vMax*multiplier)
 
-		FzChannel = forces_moments[:, 2] # Test for person on the force plate
+		######## ARBITRARY PROGRESS UPDATE ##########
+		self.progressTrial.setValue(20)
+
+		FzChannel = forces_moments[:, 2] 
 		bodyMass = FzChannel.mean()
 		if bodyMass < 300: #set really low for now; our test trials were actually collected at gain=2000 meaning calculated N values will be low
 			errorBox = QMessageBox.critical(self, 'Threshold Error', 'No force detected on the force plate.  Ensure ' +
@@ -290,9 +307,6 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		else:
 			pass
 
-		self.trials += 1
-		i = self.trials
-		print(i)
 		CofPx = ((Zo_m * (forces_moments[:, 0])) - (forces_moments[:, 4])) / forces_moments[:, 2]
 		CofPy = ((Zo_m * (forces_moments[:, 1])) - (forces_moments[:, 3])) / forces_moments[:, 2]
 		CofPx_filt = CofPfunctions.filterData(CofPx, freqCutoff=20, samplingRate=1000, order=2)
@@ -302,9 +316,12 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		velocity_x = numpy.diff(centeredCofPx) / (1./samplingRate)
 		velocity_y = numpy.diff(centeredCofPy) / (1./samplingRate)
 		velocity_resultant = numpy.sqrt(velocity_x**2 + velocity_y**2)
+
+		######## ARBITRARY PROGRESS UPDATE ##########
+		self.progressTrial.setValue(30)
 		
-		framesPos = numpy.linspace(1, (samplingRate * samplingDuration), (samplingRate * samplingDuration)) #same as above
-		framesVel = numpy.linspace(1, (samplingRate * samplingDuration)-1, (samplingRate * samplingDuration)-1) #same as above
+		framesPos = numpy.linspace(1, (samplingRate * samplingDuration), (samplingRate * samplingDuration)) 
+		framesVel = numpy.linspace(1, (samplingRate * samplingDuration)-1, (samplingRate * samplingDuration)-1) 
 		self.centredCofPx = numpy.vstack((framesPos, centeredCofPx))
 		self.centredCofPy = numpy.vstack((framesPos, centeredCofPy))
 		self.centredCofP = numpy.vstack((framesPos, centeredCofPx, centeredCofPy))
@@ -312,7 +329,8 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		self.velocityy = numpy.vstack((framesVel, velocity_y))
 		self.velocity = numpy.vstack((framesVel, velocity_x, velocity_y))
 
-		distance_x_005 = CofPfunctions.getDistance_Coverage(CofPx_filt, 0.05) #just making sure filtered data gets input here as filterData was not called in this function
+
+		distance_x_005 = CofPfunctions.getDistance_Coverage(CofPx_filt, 0.05) 
 		distance_x_010 = CofPfunctions.getDistance_Coverage(CofPx_filt, 0.1)
 		distance_x_025 = CofPfunctions.getDistance_Coverage(CofPx_filt, 0.25)
 		distance_x_050 = CofPfunctions.getDistance_Coverage(CofPx_filt, 0.5)
@@ -336,19 +354,34 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		speed_y = distance_y/((1./samplingRate) * len(CofPy)) 
 		speed_xy = distance_xy/((1./samplingRate) * len(CofPx)) 
 
-		self.completed = 0
-		while self.completed < 100:
-			self.completed += 0.0005
-			self.progressTrial.setValue(self.completed)
+		######## ARBITRARY PROGRESS UPDATE ##########
+		self.progressTrial.setValue(40)
 
+		# mse_x = CofPfunctions.filterGetMSE_coarse(CofPx-CofPx.mean(), r_fraction=0.15, max_scale_factor=40, 
+  #                       emb_dim=2, downsampleFactor=4, lowerFreqCutoff=0.28, 
+  #                       upperFreqCutoff=20, samplingRate=1000)
+		# mse_y = CofPfunctions.filterGetMSE_coarse(CofPy-CofPy.mean(), r_fraction=0.15, max_scale_factor=40, 
+  #                       emb_dim=2, downsampleFactor=4, lowerFreqCutoff=0.28, 
+  #                       upperFreqCutoff=20, samplingRate=1000)
+
+		######## ARBITRARY PROGRESS UPDATE ##########
+		self.progressTrial.setValue(50)
+		mse_x = numpy.random.randint(1000, size=40)
+		mse_y = numpy.random.randint(1000, size=40)
+
+		mse_x_area = numpy.trapz(mse_x)
+		mse_y_area = numpy.trapz(mse_y)
+
+		######## ARBITRARY PROGRESS UPDATE ##########
+		self.progressTrial.setValue(80)
 
 		# Populate these with the new variables
 		self.lineMeanSpeedx.setText(QString(str.format('{0:.4f}', speed_x)))
 		self.lineMeanSpeedy.setText(QString(str.format('{0:.4f}', speed_y)))
 		self.lineDistancex.setText(QString(str.format('{0:.4f}', distance_x)))
 		self.lineDistancey.setText(QString(str.format('{0:.4f}', distance_y)))
-		#self.lineMSEx.setText(QString())
-		#self.lineMSEy.setText(QString())
+		self.lineMSEx.setText(QString(str.format('{0:.4f}', mse_x_area)))
+		self.lineMSEy.setText(QString(str.format('{0:.4f}', mse_y_area)))
 
 		self.line005x.setText(QString(str.format('{0:.4f}', distance_x_005)))
 		self.line005y.setText(QString(str.format('{0:.4f}', distance_y_005)))
@@ -365,6 +398,9 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		self.line095x.setText(QString(str.format('{0:.4f}', distance_x_095)))
 		self.line095y.setText(QString(str.format('{0:.4f}', distance_y_095)))
 
+		######## ARBITRARY PROGRESS UPDATE ##########
+		self.progressTrial.setValue(90)
+
 		ax1 = self.figure.add_subplot(131) #these subplots will change (centred COP, Vel., MSE)
 		ax1.plot(CofPx, CofPy, 'k')
 		ax1.set_title('CoPy vs CoPx (m)')
@@ -378,67 +414,68 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		ax3.legend()
 		self.canvas.draw()
 
-		table = pd.DataFrame(columns=[['Filename', 'Mean Speed (COPx)', 'Mean Speed (COPy)', 'Distance COPx', 
-			'Distance COPy', '5', '10', '25', '50', '75', '90', '95', '5', '10', '25', '50', '75', '90', '95']])
-		table.loc[0] = [str(self.lineTrialName.text()), str(self.lineMeanSpeedx.text()), str(self.lineMeanSpeedy.text()), 
-			str(self.lineDistancex.text()), str(self.lineDistancey.text()), str(self.line005x.text()), str(self.line01x.text()), 
-			str(self.line025x.text()), str(self.line05x.text()), str(self.line075x.text()), str(self.line09x.text()), str(self.line095x.text()), 
-			str(self.line005y.text()), str(self.line01y.text()), str(self.line025y.text()), str(self.line05y.text()), str(self.line075y.text()),
-			str(self.line09y.text()), str(self.line095y.text())]
-		allTables = {}
-		allTables[i] = table
-		print(allTables) #theoretically, in my brain, this should work as each trial is processed.  The button click steps i by 1, then indexes
-		# the dataframe.  But when I print it with every trial that gets processed that is not the case (overwritten).  I've wasted
-		# too much time on this so I'm passing it to you if you have any better ideas. 
+		self.table = self.table.append({'Filename':str(self.lineTrialName.text()), 'Mean Speed (COPx)':speed_x, 
+			'Mean Speed (COPy)':speed_y, 'Distance COPx':distance_x, 'Distance COPy':distance_y, 'x5':distance_x_005, 
+			'x10':distance_x_010, 'x25':distance_x_025, 'x50':distance_x_050, 'x75':distance_x_075, 'x90':distance_x_090, 
+			'x95':distance_x_095, 'y5':distance_y_005, 'y10':distance_y_010, 'y25':distance_y_025, 'y50':distance_y_050, 
+			'y75':distance_y_075, 'y90':distance_y_090, 'y95':distance_y_095}, ignore_index=True)
+
+		# I added the trial name as well to each iteration, just in case they process trials out of order
+		velocity_df = pd.DataFrame({'Frames': framesVel.T, 'Velocity_x':velocity_x.T, 'Velocity_y':velocity_y.T})
+		columns_velocity = [('Trial ' + str(self.trial), str(self.lineTrialName.text()), 'Frames'), ('Trial ' + str(self.trial), str(self.lineTrialName.text()), 'Velocity_x'), 
+			('Trial ' + str(self.trial), str(self.lineTrialName.text()), 'Velocity_y')]
+		velocity_df.columns = pd.MultiIndex.from_tuples(columns_velocity)
+		self.velocity_table = pd.concat([self.velocity_table, velocity_df], axis=1)
+
+		position_df = pd.DataFrame({'Frames': framesPos.T, 'Position_x':centeredCofPx.T, 'Position_y':centeredCofPy.T})
+		columns_position = [('Trial ' + str(self.trial), str(self.lineTrialName.text()), 'Frames'), ('Trial ' + str(self.trial), str(self.lineTrialName.text()), 'Position_x'), 
+			('Trial ' + str(self.trial), str(self.lineTrialName.text()), 'Position_y')]
+		position_df.columns = pd.MultiIndex.from_tuples(columns_position)
+		self.position_table = pd.concat([self.position_table, position_df], axis=1)
+
+		mse_df = pd.DataFrame({'Frames': numpy.arange(1, len(mse_x)+1, 1), 'MSE_x':mse_x, 'MSE_y':mse_y})
+		columns_mse = [('Trial ' + str(self.trial), str(self.lineTrialName.text()), 'Frames'), ('Trial ' + str(self.trial), str(self.lineTrialName.text()), 'MSE_x'), 
+			('Trial ' + str(self.trial), str(self.lineTrialName.text()), 'MSE_y')]
+		mse_df.columns = pd.MultiIndex.from_tuples(columns_mse)
+		self.mse_table = pd.concat([self.mse_table, mse_df], axis=1)
+
+		self.trial += 1
+
+		######## ARBITRARY PROGRESS UPDATE ##########
+		self.progressTrial.setValue(100)
 
 	def save_results(self):
-		centredCofPx = self.centredCofPx #this way, only ML or AP can be saved... or both if both are clicked
-		centredCofPy = self.centredCofPy
-		centredCofP = self.centredCofP
-		velocityx = self.velocityx
-		velocityy = self.velocityy
-		velocity = self.velocity
-		os.chdir(self.saveDirectory)
-		if self.checkBoxCOPPos.isChecked() and self.checkBoxCOPPosy.isChecked():
-			datafr = pd.DataFrame(centredCofP.T, columns=['Frames', 'COPx', 'COPy'])
-			filepath = str(self.lineTrialName.text()) + '_COP_Position.xlsx'
-			datafr.to_excel(filepath, index=False)
-		elif self.checkBoxCOPPos.isChecked():
-			datafr = pd.DataFrame(centredCofPx.T, columns=['Frames', 'COPx'])
-			filepath = str(self.lineTrialName.text()) + '_COP_Positionx.xlsx'
-			datafr.to_excel(filepath, index=False)
-		elif self.checkBoxCOPPosy.isChecked():
-			datafr = pd.DataFrame(centredCofPy.T, columns=['Frames', 'COPy'])
-			filepath = str(self.lineTrialName.text()) + '_COP_Positiony.xlsx'
-			datafr.to_excel(filepath, index=False)
-		elif not self.checkBoxCOPPos.isChecked() and self.checkBoxCOPPosy.isChecked():
+		participant = str(self.lineParticipant.text())
+		resultsFolderName = 'Results_' + participant + '-' + time.strftime("%d-%B-%Y_%I%M%p")
+		saveLocation = str(os.path.join(str(self.dataFilesLocation), resultsFolderName))
+		os.mkdir(saveLocation)
+
+		if self.checkBoxCOPPos.isChecked():
+			filepath = os.path.join(saveLocation, 'COP_Position_' + participant + '.xlsx')
+			self.position_table.to_excel(filepath)
+		elif not self.checkBoxCOPPos.isChecked():
 			pass
 
-		if self.checkBoxCOPVel.isChecked() and self.checkBoxCOPVely.isChecked():
-			datafra = pd.DataFrame(velocity.T, columns=['Frames', 'COPx Vel.', 'COPy Vel.'])
-			filepaths = str(self.lineTrialName.text()) + '_COP_Velocity.xlsx'
-			datafra.to_excel(filepaths, index=False)
-		elif self.checkBoxCOPVel.isChecked():
-			datafra = pd.DataFrame(velocityx.T, columns=['Frames', 'COPx Vel.'])
-			filepaths = str(self.lineTrialName.text()) + '_COP_Velocityx.xlsx'
-			datafra.to_excel(filepaths, index=False)
-		elif self.checkBoxCOPVely.isChecked():
-			datafra = pd.DataFrame(velocityy.T, columns=['Frames', 'COPy Vel.'])
-			filepaths = str(self.lineTrialName.text()) + '_COP_Velocityy.xlsx'
-			datafra.to_excel(filepaths, index=False)
-		elif not self.checkBoxCOPVel.isChecked() and self.checkBoxCOPVely.isChecked():
+		if self.checkBoxCOPVel.isChecked():
+			filepath = os.path.join(saveLocation, 'COP_Velocity_' + participant + '.xlsx')
+			self.velocity_table.to_excel(filepath)
+		elif not self.checkBoxCOPVel.isChecked():
 			pass
 
-		i = self.trials
-		table = self.table
-		for tr in range(i):
-			finalTable = table.append(table[i])
-		print(finalTable)
+		if self.checkBoxMSE.isChecked():
+			filepath = os.path.join(saveLocation, 'MSE_' + participant + '.xlsx')
+			self.mse_table.to_excel(filepath)
+		elif not self.checkBoxMSE.isChecked():
+			pass
+
 		if self.checkBoxTable.isChecked():
-			filepaths = str(self.lineTrialName.text()) + '_Table_Results.xlsx'
-			finalTable.to_excel(filepaths, index=False)
+			filepath = os.path.join(saveLocation, 'Table_Results_' + participant + '.xlsx')
+			self.table.to_excel(filepath, index=False)
 		elif not self.checkBoxTable.isChecked():
 			pass
+
+		saved = QMessageBox.information(self, 'Saved Results',
+			"Results have been saved!")	#add a popup window to inform user the results are saved	
 
 
 def main():
