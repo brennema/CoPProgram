@@ -398,17 +398,20 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 
 		######## ARBITRARY PROGRESS UPDATE ##########
 		self.progressTrial.setValue(90)
+		scales = numpy.arange(1, 41, 1)
 
 		ax1 = self.figure.add_subplot(131) #these subplots will change (centred COP, Vel., MSE)
-		ax1.plot(CofPx, CofPy, 'k')
-		ax1.set_title('CoPy vs CoPx (m)')
+		ax1.plot(centeredCofPx, centeredCofPy, 'k')
+		ax1.set_title('Centred CoPy vs CoPx (m)')
 		ax2 = self.figure.add_subplot(132)
-		ax2.plot(centeredCofPx, centeredCofPy, 'k')
-		ax2.set_title('Centred CoPy vs CoPx (m)')
+		ax2.plot(timeVel, velocity_x, label="Vel x")
+		ax2.plot(timeVel, velocity_y, label="Vel y")
+		ax2.set_title('Vel (m/s) vs Time (s)')
+		ax2.legend()
 		ax3 = self.figure.add_subplot(133) 
-		ax3.plot(timeVel, velocity_x, label="Vel x")
-		ax3.plot(timeVel, velocity_y, label="Vel y")
-		ax3.set_title('Vel (m/s) vs Time (s)')
+		ax3.plot(scales, mse_x, label="MSEx")
+		ax3.plot(scales, mse_y, label="MSEy")
+		ax3.set_title('MSE')
 		ax3.legend()
 		self.canvas.draw()
 
