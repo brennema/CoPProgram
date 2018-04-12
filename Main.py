@@ -354,21 +354,21 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		######## ARBITRARY PROGRESS UPDATE ##########
 		self.progressTrial.setValue(40)
 
-		# mse_x = CofPfunctions.filterGetMSE_coarse(CofPx-CofPx.mean(), r_fraction=0.15, max_scale_factor=40, 
-  #                       emb_dim=2, downsampleFactor=4, lowerFreqCutoff=0.28, 
-  #                       upperFreqCutoff=20, samplingRate=1000)
-		# mse_y = CofPfunctions.filterGetMSE_coarse(CofPy-CofPy.mean(), r_fraction=0.15, max_scale_factor=40, 
-  #                       emb_dim=2, downsampleFactor=4, lowerFreqCutoff=0.28, 
-  #                       upperFreqCutoff=20, samplingRate=1000)
+		mse_x, mse_x_auc = CofPfunctions.filterGetMSE_coarse(CofPx-CofPx.mean(), r_fraction=0.15, max_scale_factor=40, 
+                        m=2, downsampleFactor=4, lowerFreqCutoff=0.28, 
+                        upperFreqCutoff=20, samplingRate=1000)
+		mse_y, mse_y_auc = CofPfunctions.filterGetMSE_coarse(CofPy-CofPy.mean(), r_fraction=0.15, max_scale_factor=40, 
+                        m=2, downsampleFactor=4, lowerFreqCutoff=0.28, 
+                        upperFreqCutoff=20, samplingRate=1000)
 
 		######## ARBITRARY PROGRESS UPDATE ##########
 		self.progressTrial.setValue(50)
 
-		mse_x = numpy.random.randint(1000,size=40)
-		mse_y = numpy.random.randint(1000,size=40)
+		# mse_x = numpy.random.randint(1000,size=40)
+		# mse_y = numpy.random.randint(1000,size=40)
 
-		mse_x_area = numpy.trapz(mse_x)
-		mse_y_area = numpy.trapz(mse_y)
+		# mse_x_area = numpy.trapz(mse_x)
+		# mse_y_area = numpy.trapz(mse_y)
 
 		######## ARBITRARY PROGRESS UPDATE ##########
 		self.progressTrial.setValue(80)
@@ -378,8 +378,8 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		self.lineMeanSpeedy.setText(QString(str.format('{0:.4f}', speed_y)))
 		self.lineDistancex.setText(QString(str.format('{0:.4f}', distance_x)))
 		self.lineDistancey.setText(QString(str.format('{0:.4f}', distance_y)))
-		self.lineMSEx.setText(QString(str.format('{0:.4f}', mse_x_area)))
-		self.lineMSEy.setText(QString(str.format('{0:.4f}', mse_y_area)))
+		self.lineMSEx.setText(QString(str.format('{0:.4f}', mse_x_auc)))
+		self.lineMSEy.setText(QString(str.format('{0:.4f}', mse_y_auc)))
 
 		self.line005x.setText(QString(str.format('{0:.4f}', distance_x_005)))
 		self.line005y.setText(QString(str.format('{0:.4f}', distance_y_005)))

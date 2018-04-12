@@ -1,7 +1,7 @@
 from scipy import signal 
 import numpy
-# from PyEMD import EMD
-# import neurokit
+from PyEMD import EMD
+import neurokit
 
 def getDistance_Coverage(CofP, percent_coverage):
     '''
@@ -98,7 +98,7 @@ def EMDfilterData(data, lowerFreqCutoff=0.28,upperFreqCutoff=20, samplingRate = 
     return(outputSignal)
 
 
-def getMSE_coarse(data, r_fraction=0.15, max_scale_factor=40, emb_dim=2):
+def getMSE_coarse(data, r_fraction=0.15, max_scale_factor=40, m=2):
     '''
     Inputs:
         Data: numpy arrray with one-dimensional data
@@ -106,14 +106,16 @@ def getMSE_coarse(data, r_fraction=0.15, max_scale_factor=40, emb_dim=2):
         coarse_result: numpy array of sample entropy for each scale factor upto max_scale_factor. 
     '''
     r = r_fraction*numpy.std(data)
-    coarse_result = neurokit.complexity_entropy_multiscale(data, max_scale_factor=max_scale_factor, 
-                                                           emb_dim=emb_dim, tolerance=r, 
-                                                           return_coarse_results=True)
-    return(coarse_result)
+    dict_results = neurokit.complexity_entropy_multiscale(data, max_scale_factor=40, 
+                                                           m=m, r=r)
+    coarse_results = dict_results['MSE_Values']
+    auc = dict_results['MSE_AUC']
+    
+    return(coarse_results, auc)
 
 
 def filterGetMSE_coarse(data, r_fraction=0.15, max_scale_factor=40, 
-                        emb_dim=2, downsampleFactor=4, lowerFreqCutoff=0.28, 
+                        m=2, downsampleFactor=4, lowerFreqCutoff=0.28, 
                         upperFreqCutoff=20, samplingRate=1000):
     '''
     Inputs:
@@ -127,6 +129,6 @@ def filterGetMSE_coarse(data, r_fraction=0.15, max_scale_factor=40,
     filtered_data = EMDfilterData(data, lowerFreqCutoff=lowerFreqCutoff,
                                   upperFreqCutoff=upperFreqCutoff, 
                                   samplingRate=downsampledSamplingRate)
-    coarse_mse_result = getMSE_coarse(filtered_data, r_fraction=r_fraction, 
-                                      max_scale_factor=max_scale_factor, emb_dim=emb_dim)
-    return(coarse_mse_result[0,:])
+    coarse_mse_result, auc_mse = getMSE_coarse(filtered_data, r_fraction=r_fraction, 
+                                      max_scale_factor=max_scale_factor, m=m)
+    return(coarse_mse_result, auc_mse)
