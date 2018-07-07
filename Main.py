@@ -8,6 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+from scipy.sparse.csgraph import _validation
 import warnings
 
 import ProgramGeometry #imports layout from QtDesigner
@@ -56,6 +57,9 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		# Connect save results push button
 		self.pushSave.clicked.connect(self.save_results)
 
+		# Connect 'X' close button on main window
+		self.connect(self, SIGNAL('triggered()'), self.closeEvent)
+
 
 	def close_application(self):
 		'''
@@ -63,7 +67,7 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		confirm whether they want to close.  A shortcut of Ctrl+q has also been set for this execution.
 		'''
 		choice = QMessageBox.question(self, 'Quit',
-			"Are you sure you want to quit the application?",
+			"Are you sure you want to quit the application?  Make sure you have saved your data!",
 			QMessageBox.Yes | QMessageBox.No)
 		if choice == QMessageBox.Yes:
 			sys.exit()
@@ -481,6 +485,16 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		saved = QMessageBox.information(self, 'Saved Results',
 			"Results have been saved!")	#add a popup window to inform user the results are saved	
 
+	def closeEvent(self, event):
+    	
+		choiceQuit = QMessageBox.question(self, 'Quit',
+			"Are you sure you want to quit the application?  Make sure you have saved your data!",
+			QMessageBox.Yes | QMessageBox.No)
+		if choiceQuit == QMessageBox.Yes:
+			self.destroy()
+		else:
+			event.ignore()
+   		
 
 
 def main():
