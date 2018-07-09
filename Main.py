@@ -213,8 +213,8 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		warnings.filterwarnings("ignore")
 		numpy.set_printoptions(precision=4, suppress=True)
 		self.figure.clf() #clear any previous data in the results
-		self.lineMeanSpeedx.setText(QString())
-		self.lineMeanSpeedy.setText(QString())
+		self.lineSpeedx.setText(QString())
+		self.lineSpeedy.setText(QString())
 		self.lineDistancex.setText(QString())
 		self.lineDistancey.setText(QString())
 		self.lineMSEx.setText(QString())
@@ -378,8 +378,8 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		self.progressTrial.setValue(80)
 
 		# Populate these with the new variables
-		self.lineMeanSpeedx.setText(QString(str.format('{0:.4f}', speed_x)))
-		self.lineMeanSpeedy.setText(QString(str.format('{0:.4f}', speed_y)))
+		self.lineSpeedx.setText(QString(str.format('{0:.4f}', speed_x)))
+		self.lineSpeedy.setText(QString(str.format('{0:.4f}', speed_y)))
 		self.lineDistancex.setText(QString(str.format('{0:.4f}', distance_x)))
 		self.lineDistancey.setText(QString(str.format('{0:.4f}', distance_y)))
 		self.lineMSEx.setText(QString(str.format('{0:.4f}', mse_x_auc)))
