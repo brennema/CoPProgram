@@ -150,10 +150,19 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 			QMessageBox.Yes | QMessageBox.No) # I changed this.  Since the results save with a time/day stamp I think it doesn't matter if the participant folder already exists.
 		if part == QMessageBox.Yes:
 			self.table = pd.DataFrame({'Filename':[], 'Mean Speed (COPx)':[], 'Mean Speed (COPy)':[], 'Distance COPx':[], 
-				'Distance COPy':[], 'x5':[], 'x10':[], 'x25':[], 'x50':[], 'x75':[], 'x90':[], 'x95':[], 'y5':[], 'y10':[], 
-				'y25':[], 'y50':[], 'y75':[], 'y90':[], 'y95':[]}, columns=['Filename', 'Mean Speed (COPx)', 'Mean Speed (COPy)', 
-				'Distance COPx', 'Distance COPy', 'x5', 'x10', 'x25', 'x50', 'x75', 'x90', 'x95', 'y5', 'y10', 'y25', 'y50', 
-				'y75', 'y90', 'y95'])
+				'Distance COPy':[], 'Mean Position COPx':[], 'Mean Position COPy':[], 'SD Position COPx':[], 
+				'SD Position COPy':[], 'Min Position COPx':[], 'Min Position COPy':[], 'Max Position COPx':[], 
+				'Max Position COPy':[], 'RMS Position COPx':[], 'RMS Position COPy':[], 'x5':[], 'x10':[], 'x25':[], 
+				'x50':[], 'x75':[], 'x90':[], 'x95':[], 'y5':[], 'y10':[], 'y25':[], 'y50':[], 'y75':[], 'y90':[], 'y95':[], 
+				'Effective Sampling Rate (MSE)':[], 'Low Frequency Cutoff (MSE)':[], 'High Frequency Cutoff (MSE)':[], 'r - fraction of SD (MSE)':[], 
+				'Max scale factor (MSE)':[], 'm - sequence length (MSE)':[]}, 
+				columns=['Filename', 'Mean Speed (COPx)', 'Mean Speed (COPy)', 'Distance COPx', 
+				'Distance COPy', 'Mean Position COPx', 'Mean Position COPy', 'SD Position COPx', 
+				'SD Position COPy', 'Min Position COPx', 'Min Position COPy', 'Max Position COPx', 
+				'Max Position COPy', 'RMS Position COPx', 'RMS Position COPy', 'x5', 'x10', 'x25', 
+				'x50', 'x75', 'x90', 'x95', 'y5', 'y10', 'y25', 'y50', 'y75', 'y90', 'y95', 
+				'Effective Sampling Rate (MSE)', 'Low Frequency Cutoff (MSE)', 'High Frequency Cutoff (MSE)', 
+				'r - fraction of SD (MSE)', 'Max scale factor (MSE)', 'm - sequence length (MSE)'])
 			self.position_table = pd.DataFrame()
 			self.velocity_table = pd.DataFrame()
 			self.mse_table = pd.DataFrame()
@@ -233,6 +242,16 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		self.line09y.setText(QString())
 		self.line095x.setText(QString())
 		self.line095y.setText(QString())
+		self.lineMinPosx.setText(QString())
+		self.lineMaxPosx.setText(QString())
+		self.lineMinPosy.setText(QString())
+		self.lineMaxPosy.setText(QString())
+		self.lineRMSx.setText(QString())
+		self.lineRMSy.setText(QString())
+		self.lineMeanPosx.setText(QString())
+		self.lineMeanPosy.setText(QString())
+		self.lineSDPosx.setText(QString())
+		self.lineSDPosy.setText(QString())
 
 		fileNameTrial = self.lineTrialName.text()
 		if len(fileNameTrial) <= 1:
@@ -355,15 +374,20 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		speed_y = distance_y/((1./samplingRate) * len(CofPy)) 
 		speed_xy = distance_xy/((1./samplingRate) * len(CofPx)) 
 
+		min_x, max_x, mean_x, sd_x = CofPfunctions.getCenteredSummaryStatistics(CofPx_filt)
+		min_y, max_y, mean_y, sd_y = CofPfunctions.getCenteredSummaryStatistics(CofPy_filt)
+		rms_x = CofPfunctions.getRMS(CofPx_filt)
+		rms_y = CofPfunctions.getRMS(CofPy_filt)
+
 		######## ARBITRARY PROGRESS UPDATE ##########
 		self.progressTrial.setValue(40)
 
-		mse_x, mse_x_auc = CofPfunctions.filterGetMSE_coarse(CofPx-CofPx.mean(), r_fraction=0.15, max_scale_factor=40, 
-                        m=2, downsampleFactor=4, lowerFreqCutoff=0.28, 
-                        upperFreqCutoff=20, samplingRate=1000)
-		mse_y, mse_y_auc = CofPfunctions.filterGetMSE_coarse(CofPy-CofPy.mean(), r_fraction=0.15, max_scale_factor=40, 
-                        m=2, downsampleFactor=4, lowerFreqCutoff=0.28, 
-                        upperFreqCutoff=20, samplingRate=1000)
+		mse_x, mse_x_auc, effectiveSamplingRate, lowFreqCutoff = CofPfunctions.filterGetMSE_coarse(CofPx-CofPx.mean(), r_fraction=0.15, max_scale_factor=20, 
+                        m=2, pointsLastMSE =300, upperFreqCutoff=20, 
+                        samplingRate=float(self.lineSampling.text()))
+		mse_y, mse_y_auc, effectiveSamplingRate, lowFreqCutoff = CofPfunctions.filterGetMSE_coarse(CofPy-CofPy.mean(), r_fraction=0.15, max_scale_factor=40, 
+                        m=2, pointsLastMSE =300, upperFreqCutoff=20, 
+                        samplingRate=float(self.lineSampling.text()))
 
 		######## ARBITRARY PROGRESS UPDATE ##########
 		self.progressTrial.setValue(50)
@@ -385,6 +409,25 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		self.lineMSEx.setText(QString(str.format('{0:.4f}', mse_x_auc)))
 		self.lineMSEy.setText(QString(str.format('{0:.4f}', mse_y_auc)))
 
+		#min/max values
+		self.lineMinPosx.setText(QString(str.format('{0:.4f}', min_x)))
+		self.lineMaxPosx.setText(QString(str.format('{0:.4f}', max_x)))
+		self.lineMinPosy.setText(QString(str.format('{0:.4f}', min_y)))
+		self.lineMaxPosy.setText(QString(str.format('{0:.4f}', max_y)))
+
+		#RMSvalue
+		self.lineRMSx.setText(QString(str.format('{0:.4f}', rms_x)))
+		self.lineRMSy.setText(QString(str.format('{0:.4f}', rms_y)))
+
+		#mean positions (absolute)
+		self.lineMeanPosx.setText(QString(str.format('{0:.4f}', mean_x)))
+		self.lineMeanPosy.setText(QString(str.format('{0:.4f}', mean_y)))
+
+		#sd positions (absolute)
+		self.lineSDPosx.setText(QString(str.format('{0:.4f}', sd_x)))
+		self.lineSDPosy.setText(QString(str.format('{0:.4f}', sd_y)))
+
+		#percentile distances from the center. 
 		self.line005x.setText(QString(str.format('{0:.4f}', distance_x_005)))
 		self.line005y.setText(QString(str.format('{0:.4f}', distance_y_005)))
 		self.line01x.setText(QString(str.format('{0:.4f}', distance_x_010)))
@@ -420,10 +463,16 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		self.canvas.draw()
 
 		self.table = self.table.append({'Filename':str(self.lineTrialName.text()), 'Mean Speed (COPx)':speed_x, 
-			'Mean Speed (COPy)':speed_y, 'Distance COPx':distance_x, 'Distance COPy':distance_y, 'x5':distance_x_005, 
-			'x10':distance_x_010, 'x25':distance_x_025, 'x50':distance_x_050, 'x75':distance_x_075, 'x90':distance_x_090, 
-			'x95':distance_x_095, 'y5':distance_y_005, 'y10':distance_y_010, 'y25':distance_y_025, 'y50':distance_y_050, 
-			'y75':distance_y_075, 'y90':distance_y_090, 'y95':distance_y_095}, ignore_index=True)
+			'Mean Speed (COPy)':speed_y, 'Distance COPx':distance_x, 'Distance COPy':distance_y, 'Mean Position COPx':mean_x,
+			'Mean Position COPy':mean_y, 'SD Position COPx':sd_x, 'SD Position COPy':sd_y, 'Min Position COPx':min_x,
+			'Min Position COPy':min_y, 'Max Position COPx':max_x, 'Max Position COPy':max_y, 'RMS Position COPx':rms_x,
+			'RMS Position COPy':rms_y, 'x5':distance_x_005, 'x10':distance_x_010, 'x25':distance_x_025, 'x50':distance_x_050, 
+			'x75':distance_x_075, 'x90':distance_x_090, 'x95':distance_x_095, 'y5':distance_y_005, 'y10':distance_y_010, 
+			'y25':distance_y_025, 'y50':distance_y_050, 'y75':distance_y_075, 'y90':distance_y_090, 'y95':distance_y_095,
+			'Effective Sampling Rate (MSE)':effectiveSamplingRate, 'Low Frequency Cutoff (MSE)':lowFreqCutoff,
+			'High Frequency Cutoff (MSE)':20, 'r - fraction of SD (MSE)':0.15, 'Max scale factor (MSE)':20,
+			'm - sequence length (MSE)':2}, 
+			ignore_index=True)
 
 		# I added the trial name as well to each iteration, just in case they process trials out of order
 		velocity_df = pd.DataFrame({'Frames': framesVel.T, 'Velocity_x':velocity_x.T, 'Velocity_y':velocity_y.T})
