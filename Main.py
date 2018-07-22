@@ -44,6 +44,7 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 
 		# Connect participant code 
 		self.lineParticipant.returnPressed.connect(self.participant)
+		self.participant = None
 
 		# Connect trial select
 		QObject.connect(self.listDirectory, SIGNAL("itemClicked(QListWidgetItem *)"), self.trial_select_list)
@@ -107,18 +108,17 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		Drectory List in the program will select the trial.  A pop-up window confirming the trial selection will finish
 		the exection.  
 		'''
-		fileNameTrial = self.listDirectory.currentItem().text()
+		self.fileNameTrial = self.listDirectory.currentItem().text()
 		trialSelect = QMessageBox.question(self, 'Trial select',
-			"You have chosen: " + str(fileNameTrial) + " to process.  "\
+			"You have chosen: " + str(self.fileNameTrial) + " to process.  "\
 			"Is this correct?",
 			QMessageBox.Yes | QMessageBox.No)
 		self.progressTrial.setValue(0) 
 
 		if trialSelect == QMessageBox.Yes:
-			trialName = fileNameTrial
-			self.lineTrialName.setText(QString(trialName))
+			self.lineTrialName.setText(QString(self.fileNameTrial))
 		else:
-			trialName = []
+			self.fileNameTrial = None
 			pass
 
 	def trial_open(self):
@@ -133,10 +133,10 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 			"Is this correct?",
 			QMessageBox.Yes | QMessageBox.No)
 			if trial == QMessageBox.Yes:
-				trialName = trialSel
-				self.lineTrialName.setText(QString(trialName))
+				self.fileNameTrial = trialSel
+				self.lineTrialName.setText(QString(self.fileNameTrial))
 			else:
-				trialName = []
+				self.fileNameTrial = None
 				pass
 
 	def participant(self):
@@ -144,9 +144,11 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		When a new participant is added, the program will prompt whether this is a new participant or not.  The answer
 		will be stored in 'self', for future use. 
 		'''
-		participant = str(self.lineParticipant.text())
+		self.participant = str(self.lineParticipant.text())
 		part = QMessageBox.question(self, 'Participant',
-			"Is this the correct participant code?",
+			                        "Is this the correct participant code? <br> <br> "
+			                        "<i>Ensure data is saved before changing participants."
+			                        "<b>Analyzed data will be cleared</i></b>",
 			QMessageBox.Yes | QMessageBox.No) # I changed this.  Since the results save with a time/day stamp I think it doesn't matter if the participant folder already exists.
 		if part == QMessageBox.Yes:
 			self.table = pd.DataFrame({'Filename':[], 'Mean Speed (COPx)':[], 'Mean Speed (COPy)':[], 'Distance COPx':[], 
@@ -167,7 +169,8 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 			self.velocity_table = pd.DataFrame()
 			self.mse_table = pd.DataFrame()
 			self.trial = 1
-			self.listDirectory.clear() # Clear the directory list.  This triggers for the user that they need to choose a new directory with new participant trials. 
+			#removed the below as it cleared the directory - but this is unwanted is someone just did things in a different order. 
+			# self.listDirectory.clear() # Clear the directory list.  This triggers for the user that they need to choose a new directory with new participant trials. 
 		else:
 			pass 
 
@@ -253,20 +256,19 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		self.lineSDPosx.setText(QString())
 		self.lineSDPosy.setText(QString())
 
-		fileNameTrial = self.lineTrialName.text()
-		if len(fileNameTrial) <= 1:
-			noTrial = QMessageBox.warning(self, 'Warning', 
-				"No trial chosen!  Please select a trial to continue processing.",
-				QMessageBox.Ok)
+		if self.fileNameTrial == None:
+			QMessageBox.warning(self, 'Warning', 
+				                "No trial chosen!  Please select a trial to continue processing.",
+				                QMessageBox.Ok)
 			return
 		else:
 			pass
 
-		participantNum = str(self.lineParticipant.text())
-		if participantNum == 'Enter Participant Code':
-			noParticipant = QMessageBox.warning(self, 'Warning',
-				"No participant entered.  Please enter a participant code.",
-				QMessageBox.Ok)
+		if self.participant == None:
+			QMessageBox.warning(self, 'Warning',
+				                "No participant entered.<br> Please enter a participant code.<br>"
+				                "<i> Ensure that you press Enter after typing the participant name</i>",
+				                QMessageBox.Ok)
 			return
 		else:
 			pass
@@ -502,31 +504,30 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		self.progressTrial.setValue(100)
 
 	def save_results(self):
-		participant = str(self.lineParticipant.text())
-		resultsFolderName = 'Results_' + participant + '-' + time.strftime("%d-%B-%Y_%I%M%p")
+		resultsFolderName = 'Results_' + self.participant + '-' + time.strftime("%d-%B-%Y_%I%M%p")
 		saveLocation = str(os.path.join(str(self.dataFilesLocation), resultsFolderName))
 		os.mkdir(saveLocation)
 
 		if self.checkBoxCOPPos.isChecked():
-			filepath = os.path.join(saveLocation, 'COP_Position_' + participant + '.xlsx')
+			filepath = os.path.join(saveLocation, 'COP_Position_' + self.participant + '.xlsx')
 			self.position_table.to_excel(filepath)
 		elif not self.checkBoxCOPPos.isChecked():
 			pass
 
 		if self.checkBoxCOPVel.isChecked():
-			filepath = os.path.join(saveLocation, 'COP_Velocity_' + participant + '.xlsx')
+			filepath = os.path.join(saveLocation, 'COP_Velocity_' + self.participant + '.xlsx')
 			self.velocity_table.to_excel(filepath)
 		elif not self.checkBoxCOPVel.isChecked():
 			pass
 
 		if self.checkBoxMSE.isChecked():
-			filepath = os.path.join(saveLocation, 'MSE_' + participant + '.xlsx')
+			filepath = os.path.join(saveLocation, 'MSE_' + self.participant + '.xlsx')
 			self.mse_table.to_excel(filepath)
 		elif not self.checkBoxMSE.isChecked():
 			pass
 
 		if self.checkBoxTable.isChecked():
-			filepath = os.path.join(saveLocation, 'Table_Results_' + participant + '.xlsx')
+			filepath = os.path.join(saveLocation, 'Table_Results_' + self.participant + '.xlsx')
 			self.table.to_excel(filepath, index=False)
 		elif not self.checkBoxTable.isChecked():
 			pass
