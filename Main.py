@@ -292,10 +292,10 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 					str(plateNum) + ' is not found. This file does not exist, or may be corrupt.')
 			sensitivityMatrix = numpy.asarray(dataFrame)
 
-		try: analog_data = pd.read_csv(str(fileNameTrial), sep=',', skiprows=3, usecols=range(1,13))
+		try: analog_data = pd.read_csv(str(self.fileNameTrial), sep=',', skiprows=3, usecols=range(1,13))
 		except:
 			errorBox = QMessageBox.critical(self, 'File Error', 'You are procssing a file named: ' +
-				str(fileNameTrial) + '. This file is in the wrong format.  Choose a file with the ending: _Odau_1.csv')
+				str(self.fileNameTrial) + '. This file is in the wrong format.  Choose a file with the ending: _Odau_1.csv')
 			return None
 
 		if plateNum == 1: 
@@ -464,7 +464,7 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		ax3.legend()
 		self.canvas.draw()
 
-		self.table = self.table.append({'Filename':str(self.lineTrialName.text()), 'Mean Speed (COPx)':speed_x, 
+		self.table = self.table.append({'Filename':str(self.fileNameTrial), 'Mean Speed (COPx)':speed_x, 
 			'Mean Speed (COPy)':speed_y, 'Distance COPx':distance_x, 'Distance COPy':distance_y, 'Mean Position COPx':mean_x,
 			'Mean Position COPy':mean_y, 'SD Position COPx':sd_x, 'SD Position COPy':sd_y, 'Min Position COPx':min_x,
 			'Min Position COPy':min_y, 'Max Position COPx':max_x, 'Max Position COPy':max_y, 'RMS Position COPx':rms_x,
@@ -478,23 +478,23 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 
 		# I added the trial name as well to each iteration, just in case they process trials out of order
 		velocity_df = pd.DataFrame({'Frames': framesVel.T, 'Velocity_x':velocity_x.T, 'Velocity_y':velocity_y.T})
-		columns_velocity = [('Trial ' + str(self.trial), str(self.lineTrialName.text()), 'Frames'), 
-			('Trial ' + str(self.trial), str(self.lineTrialName.text()), 'Velocity_x'), 
-			('Trial ' + str(self.trial), str(self.lineTrialName.text()), 'Velocity_y')]
+		columns_velocity = [('Trial ' + str(self.trial), str(self.fileNameTrial), 'Frames'), 
+			('Trial ' + str(self.trial), str(self.fileNameTrial), 'Velocity_x'), 
+			('Trial ' + str(self.trial), str(self.fileNameTrial), 'Velocity_y')]
 		velocity_df.columns = pd.MultiIndex.from_tuples(columns_velocity)
 		self.velocity_table = pd.concat([self.velocity_table, velocity_df], axis=1)
 
 		position_df = pd.DataFrame({'Frames': framesPos.T, 'Position_x':centeredCofPx.T, 'Position_y':centeredCofPy.T})
-		columns_position = [('Trial ' + str(self.trial), str(self.lineTrialName.text()), 'Frames'), 
-			('Trial ' + str(self.trial), str(self.lineTrialName.text()), 'Position_x'), 
-			('Trial ' + str(self.trial), str(self.lineTrialName.text()), 'Position_y')]
+		columns_position = [('Trial ' + str(self.trial), str(self.fileNameTrial), 'Frames'), 
+			('Trial ' + str(self.trial), str(self.fileNameTrial), 'Position_x'), 
+			('Trial ' + str(self.trial), str(self.fileNameTrial), 'Position_y')]
 		position_df.columns = pd.MultiIndex.from_tuples(columns_position)
 		self.position_table = pd.concat([self.position_table, position_df], axis=1)
 
 		mse_df = pd.DataFrame({'Frames': numpy.arange(1,len(mse_x)+1,1), 'MSE_x':mse_x, 'MSE_y':mse_y})
-		columns_mse = [('Trial ' + str(self.trial), str(self.lineTrialName.text()), 'Frames'), 
-			('Trial ' + str(self.trial), str(self.lineTrialName.text()), 'MSE_x'), 
-			('Trial ' + str(self.trial), str(self.lineTrialName.text()), 'MSE_y')]
+		columns_mse = [('Trial ' + str(self.trial), str(self.fileNameTrial), 'Frames'), 
+			('Trial ' + str(self.trial), str(self.fileNameTrial), 'MSE_x'), 
+			('Trial ' + str(self.trial), str(self.fileNameTrial), 'MSE_y')]
 		mse_df.columns = pd.MultiIndex.from_tuples(columns_mse)
 		self.mse_table = pd.concat([self.mse_table, mse_df], axis=1)
 
