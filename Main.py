@@ -147,7 +147,7 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		self.participant = str(self.lineParticipant.text())
 		part = QMessageBox.question(self, 'Participant',
 			                        "Is this the correct participant code? <br> <br> "
-			                        "<i>Ensure data is saved before changing participants."
+			                        "<i>Ensure data is saved before changing participants.<br>"
 			                        "<b>Analyzed data will be cleared</i></b>",
 			QMessageBox.Yes | QMessageBox.No) # I changed this.  Since the results save with a time/day stamp I think it doesn't matter if the participant folder already exists.
 		if part == QMessageBox.Yes:
