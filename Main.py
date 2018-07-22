@@ -1,3 +1,4 @@
+
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import sys
@@ -147,8 +148,8 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		self.participant = str(self.lineParticipant.text())
 		part = QMessageBox.question(self, 'Participant',
 			                        "Is this the correct participant code? <br> <br> "
-			                        "<i>Ensure data is saved before changing participants.<br>"
-			                        "<b>Analyzed data will be cleared</i></b>",
+			                        "<i>Ensure data is saved before changing participants."
+			                        "<b> Analyzed data will be cleared.</i></b>",
 			QMessageBox.Yes | QMessageBox.No) # I changed this.  Since the results save with a time/day stamp I think it doesn't matter if the participant folder already exists.
 		if part == QMessageBox.Yes:
 			self.table = pd.DataFrame({'Filename':[], 'Mean Speed (COPx)':[], 'Mean Speed (COPy)':[], 'Distance COPx':[], 
@@ -256,7 +257,7 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 		self.lineSDPosx.setText(QString())
 		self.lineSDPosy.setText(QString())
 
-		if self.fileNameTrial == None:
+		if self.lineTrialName.text().isEmpty():
 			QMessageBox.warning(self, 'Warning', 
 				                "No trial chosen!  Please select a trial to continue processing.",
 				                QMessageBox.Ok)
@@ -266,8 +267,9 @@ class ExampleApp(QMainWindow, ProgramGeometry.Ui_MainWindow):
 
 		if self.participant == None:
 			QMessageBox.warning(self, 'Warning',
-				                "No participant entered.<br> Please enter a participant code.<br>"
-				                "<i> Ensure that you press Enter after typing the participant name</i>",
+				                "No participant entered."
+				                "<br> Please enter a participant code.<br>"
+				                "<i> Ensure that you press Enter after typing the participant name.</i>",
 				                QMessageBox.Ok)
 			return
 		else:
