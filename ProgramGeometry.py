@@ -644,7 +644,7 @@ class Ui_MainWindow(object):
         self.labelMinPos.setText(_translate("MainWindow", "Min Position", None))
         self.labelMaxPos.setText(_translate("MainWindow", "Max Position", None))
         self.labelRMS.setText(_translate("MainWindow", "RMS Position", None))
-        self.labelDistance.setText(_translate("MainWindow", "Mean Distance", None))
+        self.labelDistance.setText(_translate("MainWindow", "Total Distance", None))
         self.labelSpeed.setText(_translate("MainWindow", "Mean Speed", None))
         self.labelMSE.setText(_translate("MainWindow", "MSE", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "Results", None))
